@@ -1,0 +1,14 @@
+
+.imdb-torrent-search {
+  color: white;
+  .imdb-torrent-search-seeds {
+    color: limegreen;
+  }
+
+  .imdb-torrent-search-peers {
+    color: red;
+  }
+  tr {
+    text-align: left;
+  }
+}
