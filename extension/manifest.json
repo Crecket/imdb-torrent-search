@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "IMDB Torrent Search",
   "short_name": "IMDB-Search",
-  "description": "Automatically display the most populartorrents on IMDB pages",
+  "description": "Automatically display the most popular torrents on IMDB pages",
   "version": "1.0.0",
   "offline_enabled": false,
   "content_scripts": [
