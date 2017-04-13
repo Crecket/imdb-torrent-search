@@ -20,42 +20,87 @@ let isVisible = false;
 // magnet image
 const logoImageUrl = chrome.extension.getURL("img/logo-16x16.png");
 
+// remove /title/ and trailing slash from pathname
+const imdbID = location.pathname.replace(/(\/title\/)|\//g, '');
+
 /**
- * Do a lookup tp the yts api using a title
+ * Check the imdb info for this page and do a corresponding api call to fetch the results
  *
- * @param title
  * @returns {Promise.<*>}
  */
 const start = async () => {
-    let movieTorrents = [];
-    let title = "";
+    // get the info for this movie/series so we have to parse less html
+    const imdbInfo = await getImdbInfo();
 
-    // remove /title/ and trailing slash from pathname
-    const imdbID = location.pathname.replace(/(\/title\/)|\//g, '');
+    Logger.debug(imdbInfo);
 
-    // get the title from html and parse it, use the originalTitle if one is present
-    const originalTitle = $('.originalTitle').text();
-    if (!originalTitle || originalTitle.length <= 0) {
-        // fall back to the default title
-        title = $('.title_wrapper h1').text();
-        if (!title || title.length <= 0) {
-            throw new Error('Couldn\'t find the title from the page');
-        }
-    } else {
-        // we have a original title, use that instead
-        title = originalTitle;
+    // check which type of call we have to do
+    let htmlOutput = "";
+    switch (imdbInfo.Type) {
+        case "movie":
+            // this page contains a movie
+            htmlOutput = await getMovie();
+            break;
+        case "series":
+            // this page contains a movie
+            htmlOutput = await getSeries();
     }
 
-    // split the year/extra info from the title and trim spaces
-    const titleParsed = title.split('(')[0].trim();
+    // update the inline result
+    displayInline(imdbInfo, htmlOutput, isVisible);
+
+    // startup was successful
+    return true;
+}
+
+/**
+ * Do a lookup to the popcorntime api for the imdb id
+ *
+ * @returns {Promise.<*>}
+ */
+const getSeries = async () => {
+    let showTorrents = {};
 
     // do lookup to the yts api
-    const result = await checkApi(imdbID);
+    const result = await checkPPTApi(imdbID, "show");
 
-    if (result.length < 1) {
-        // imdb ID not found
-        return false;
-    }
+    Logger.debug("Show", result);
+
+    // require atleast one result
+    if (!result) return "";
+
+    // loop through episodes and generated a sorted/formatted object
+    result.episodes.map(episode => {
+        // if doesn't exist yet create empty object slot
+        if (!showTorrents[episode.season]) showTorrents[episode.season] = {};
+        // add episode to this season
+        showTorrents[episode.season][episode.episode] = {
+            episode: episode.episode,
+            season: episode.season,
+            title: episode.title,
+            torrents: episode.torrents
+        };
+    });
+
+    Logger.debug("Show result", showTorrents);
+
+    return Templates.showTable(showTorrents);
+}
+
+/**
+ * Fetches torrent information for a given imdbID
+ * @returns {Promise.<*>}
+ */
+const getMovie = async () => {
+    let movieTorrents = [];
+
+    // do lookup to the yts api
+    const result = await checkPPTApi(imdbID, "movie");
+
+    Logger.debug("Movie", result);
+
+    // require atleast one result
+    if (!result) return "";
 
     // check if we got enough results
     if (Object.keys(result.torrents).length > 0) {
@@ -70,8 +115,6 @@ const start = async () => {
             // get torrent info
             const torrent = torrents[quality];
 
-            console.log(torrents, torrent);
-
             // create a list
             movieTorrents.push({
                 peers: torrent.peer,
@@ -84,33 +127,30 @@ const start = async () => {
         });
     }
 
-    // update the inline result
-    displayInline(titleParsed, movieTorrents, isVisible);
+    Logger.debug("Movie result", movieTorrents);
 
-    // startup was successful
-    return true;
-}
+    return Templates.movieTable(movieTorrents);
+};
 
 /**
  * Displays the inline div based on lookup results
  *
- * @param title
- * @param movieTorrents
+ * @param imdbInfo
+ * @param htmlOutput
  * @param isVisible
  * @returns {*|jQuery}
  */
-const displayInline = (title, movieTorrents, isVisible) => {
+const displayInline = (imdbInfo, htmlOutput, isVisible) => {
     // if not visible, remove and don't do anything else
     if (!isVisible) return $('#imdb-torrent-search-inline').html("");
 
     // generate templates
-    const table = Templates.table(movieTorrents);
-    const links = Templates.links(title);
+    const links = Templates.links(imdbInfo.Title);
 
     // render the results
     $('#imdb-torrent-search-inline').html(`
         <hr/>
-        ${table}
+        ${htmlOutput}
         <hr/>
         ${links}
     `);
@@ -120,15 +160,23 @@ const displayInline = (title, movieTorrents, isVisible) => {
  * Does lookup to the popcorntime API
  *
  * @param imdbID
- * @returns {Promise.<void>}
+ * @param type
+ * @returns {Promise.<*|Promise.<TResult>>}
  */
-const checkApi = async (imdbID, type = "movie") => {
-    // do the api call
-    const apiResult = await axios.get(`https://tv-v2.api-fetch.website/${type}/${imdbID}`);
-
-    // return the result data
-    return apiResult.data;
+const checkPPTApi = async (imdbID, type = "movie") => {
+    // do the api call and return the result
+    return await axios.get(`https://tv-v2.api-fetch.website/${type}/${imdbID}`).then(result => result.data);
 }
+
+/**
+ * Get info from the unofficial imdb api for this imdbID
+ *
+ * @returns {Promise.<*|Promise.<TResult>>}
+ */
+const getImdbInfo = async () => {
+    // do the api call
+    return await axios.get(`http://www.omdbapi.com/?i=${imdbID}`).then(result => result.data);
+};
 
 // create image for click event and other interactions
 $('.title_wrapper h1').append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);

@@ -3,7 +3,7 @@
  * @param movieTorrents
  * @returns {string}
  */
-const createTable = (movieTorrents) => {
+const createMovieTable = (movieTorrents) => {
     if (movieTorrents.length < 1) {
         return `<p>No direct torrents were found.</p>`;
     }
@@ -49,6 +49,73 @@ const createTable = (movieTorrents) => {
 
 /**
  *
+ * @param showEpisodes
+ * @returns {string}
+ */
+const createShowTable = (showTorrents) => {
+    if (Object.keys(showTorrents).length < 1) {
+        return `<p>No direct torrents were found.</p>`;
+    }
+    let htmlOutput = "";
+
+    // magnet image
+    const magnetImageUrl = chrome.extension.getURL("img/icon-magnet.gif");
+
+    // loop through generated object
+    Object.keys(showTorrents).map(season => {
+        // get info for this season
+        const seasonList = showTorrents[season];
+
+        // ignore seasons with no episodes
+        if (Object.keys(seasonList).length < 1) return;
+
+        // add season header
+        htmlOutput += `<tr><th colspan="3">Season ${season}</th></tr>
+        <tr><th>Ep</th><th>Title</th><th>Quality</th></tr>`;
+
+        // loop through episodes for this season
+        Object.keys(seasonList).map(episode => {
+            // get info for this episode
+            const episodeInfo = seasonList[episode];
+
+            // ignore episodes without a title
+            if (!episodeInfo.title) return;
+
+            // loop through torrents and return a html string
+            let qualityList = [];
+            Object.keys(episodeInfo.torrents).map(quality => {
+                // get info for this quality type
+                const qualityInfo = episodeInfo.torrents[quality];
+
+                // ignore quality 0
+                if (quality === "0") return;
+                qualityList.push(`
+                    <a href="${qualityInfo.url}">
+                        <img id="imdb-torrent-search-icon" src="${magnetImageUrl}"> ${quality} 
+                    </a>
+                `);
+            });
+
+            htmlOutput += `<tr>
+                <td>${episode}</td>
+                <td>${episodeInfo.title}</td>
+                <td>${qualityList.join(', ')}</td>
+            </tr>`;
+        });
+    });
+
+    // return a table with the torrent list
+    return `
+        <table class="cast_list imdb-torrent-search-table">
+            <tbody>
+                ${htmlOutput}
+            </tbody>
+        </table>
+    `;
+}
+
+/**
+ *
  * @param title
  * @returns {string}
  */
@@ -80,6 +147,7 @@ const createLinks = (title) => {
 }
 
 module.exports = {
-    table: createTable,
+    movieTable: createMovieTable,
+    showTable: createShowTable,
     links: createLinks,
 }
