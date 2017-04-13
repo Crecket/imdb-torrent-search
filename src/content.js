@@ -34,7 +34,7 @@ const start = async () => {
     // get the info for this movie/series so we have to parse less html
     const imdbInfo = await getImdbInfo();
 
-    Logger.debug(imdbInfo);
+    Logger.debug("Start ", imdbInfo);
 
     // check which type of call we have to do
     let htmlOutput = "";
@@ -43,10 +43,12 @@ const start = async () => {
             // this page contains a movie
             htmlOutput = await getMovie();
             break;
-        case "movie":
+        case "series":
             // this page contains a movie
             htmlOutput = await getSeries();
     }
+
+    Logger.debug("Start end", htmlOutput);
 
     // update the inline result
     displayInline(imdbInfo, htmlOutput, isVisible);
