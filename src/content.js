@@ -41,7 +41,7 @@ const start = async () => {
             // this page contains a movie
             htmlOutput = await getMovie();
             break;
-        case "series":
+        case "movie":
             // this page contains a movie
             htmlOutput = await getSeries();
     }
