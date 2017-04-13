@@ -18,5 +18,12 @@ Add the unpacked `extension` folder in chrome
 - Tests in Jest
 - Support for other browsers
 
-## Screenshot
-![Screenshot 1](images/screenshot-1.png "Screenshot 1")
+## Screenshots
+
+A movie page
+
+![Screenshot 1](images/screenshot-640x400.png "Screenshot 1")
+
+A series page
+
+![Screenshot 1](images/screenshot-640x400-2.png "Screenshot 1")
