@@ -1,7 +1,7 @@
 {
   "name": "imdb-search",
   "version": "1.0.1",
-  "description": "A simple extension that displays torrents for IMDB movies directly onto the page",
+  "description": "A simple extension that displays torrents for IMDB movies and series directly onto the page",
   "main": "app.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack --debug --watch --progress --colors",

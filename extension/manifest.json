@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "IMDB Torrent Search",
   "short_name": "IMDB Torrent Search",
-  "description": "A simple extension that displays torrents for IMDB movies directly onto the page",
+  "description": "A simple extension that displays torrents for IMDB movies and series directly onto the page",
   "version": "1.0.1",
   "offline_enabled": false,
   "content_scripts": [

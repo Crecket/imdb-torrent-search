@@ -1,5 +1,5 @@
 # imdb-torrent-search
-A simple extension that displays torrents for IMDB movies directly onto the page
+A simple extension that displays torrents for IMDB movies and series directly onto the page
 
 ## Installation
 - [Chrome Store](https://chrome.google.com/webstore/detail/imdb-torrent-search/kaacflffkmlaiebklgemhmlfbhificko?hl=en)
@@ -13,8 +13,7 @@ Add the unpacked `extension` folder in chrome
 
 ## Todo
 - Options for default visibility
-- Support for TV Series
-- Use imdb ID for lookups when possible instead of the title
+- Options for showing just the latest season for series
 - Popup for settings
 - Tests in Jest
 - Support for other browsers
