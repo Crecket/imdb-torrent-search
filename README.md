@@ -17,4 +17,4 @@ Add the unpacked `extension` folder in chrome
 
 
 ## Screenshot
-![Screenshot 1](screenshots/image-1.png "Screenshot 1")
+![Screenshot 1](images/screenshot-1.png "Screenshot 1")
