@@ -54,7 +54,7 @@ const createTable = (movieTorrents) => {
  */
 const createLinks = (title) => {
     // encode the title without non alphanumeric
-    const encodedTitle = encodeURIComponent(title.replace(/[^0-9a-z ]/gi, ''));
+    const encodedTitle = encodeURIComponent(title.replace(/[^0-9a-z ]/gi, '').trim());
 
     // return the list of links to search pages for
     return `

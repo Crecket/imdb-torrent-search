@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
   "name": "IMDB Torrent Search",
-  "short_name": "IMDB-Search",
-  "description": "Automatically display the most popular torrents on IMDB pages",
-  "version": "1.0.0",
+  "short_name": "IMDB Torrent Search",
+  "description": "A simple extension that displays torrents for IMDB movies directly onto the page",
+  "version": "1.0.1",
   "offline_enabled": false,
   "content_scripts": [
     {
@@ -33,7 +33,7 @@
     "https://fonts.googleapis.com/*"
   ],
   "web_accessible_resources": [
-    "img/icon-16.png",
+    "img/logo-16x16.png",
     "img/icon-magnet.gif",
     "img/1337x-favicon.png",
     "img/extratorrent-favicon.png",

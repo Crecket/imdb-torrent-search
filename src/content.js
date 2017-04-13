@@ -18,6 +18,7 @@ const Templates = require('./Templates');
 let isVisible = false;
 
 // magnet image
+const logoImageUrl = chrome.extension.getURL("img/logo-16x16.png");
 const magnetImageUrl = chrome.extension.getURL("img/icon-magnet.gif");
 
 /**
@@ -30,12 +31,21 @@ const start = async () => {
     // the movie info
     let movieTorrents = [];
     let movieInfo = false;
+    let title = "";
 
-    // get the title from html and parse it
-    const title = $('.title_wrapper h1').text();
-    if (!title || title.length <= 0) {
-        throw new Error('Couldn\'t find the title from the page');
+    // get the title from html and parse it, use the originalTitle if one is present
+    const originalTitle = $('.originalTitle').text();
+    if (!originalTitle || originalTitle.length <= 0) {
+        // fall back to the default title
+        title = $('.title_wrapper h1').text();
+        if (!title || title.length <= 0) {
+            throw new Error('Couldn\'t find the title from the page');
+        }
+    } else {
+        // we have a original title, use that instead
+        title = originalTitle;
     }
+
     // split the year from the title and trim space away
     const titleParsed = title.split('(')[0].trim();
 
@@ -81,7 +91,7 @@ const start = async () => {
     }
 
     // update the inline result
-    displayInline(title, movieInfo, movieTorrents, isVisible);
+    displayInline(titleParsed, movieInfo, movieTorrents, isVisible);
 
     // startup was successful
     return true;
@@ -101,7 +111,7 @@ const displayInline = (title, movieInfo, movieTorrents, isVisible) => {
 
     // generate templates
     const table = Templates.table(movieTorrents);
-    const links = Templates.links(movieInfo ? movieInfo.title_long : title);
+    const links = Templates.links(title);
 
     // render the results
     $('#imdb-torrent-search-inline').html(`
@@ -136,7 +146,7 @@ const checkApi = async (query, params = {}) => {
 }
 
 // create image for click event and other interactions
-$('.title_wrapper h1').append(`<img id="imdb-torrent-search-icon" src="${magnetImageUrl}">`);
+$('.title_wrapper h1').append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
 
 // append the inline block so we can modify it more easily
 $('.title_block').append(`<div id="imdb-torrent-search-inline"></div>`)
