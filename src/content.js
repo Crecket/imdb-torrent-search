@@ -31,6 +31,10 @@ const imdbID = location.pathname.replace(/(\/title\/)|\//g, '');
  * @returns {Promise.<*>}
  */
 const start = async () => {
+    // reset info
+    showTorrents = {};
+    movieTorrents = [];
+    
     // get the info for this movie/series so we have to parse less html
     const imdbInfo = await getImdbInfo();
 
