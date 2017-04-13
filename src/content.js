@@ -14,8 +14,10 @@ const axios = require('axios');
 const Logger = require('./Helpers/Logger');
 const Templates = require('./Helpers/Templates');
 
-// whether the inline element is visible
+// global settings for caching
 let isVisible = false;
+let showTorrents = {};
+let movieTorrents = [];
 
 // magnet image
 const logoImageUrl = chrome.extension.getURL("img/logo-16x16.png");
@@ -59,8 +61,6 @@ const start = async () => {
  * @returns {Promise.<*>}
  */
 const getSeries = async () => {
-    let showTorrents = {};
-
     // do lookup to the yts api
     const result = await checkPPTApi(imdbID, "show");
 
@@ -92,8 +92,6 @@ const getSeries = async () => {
  * @returns {Promise.<*>}
  */
 const getMovie = async () => {
-    let movieTorrents = [];
-
     // do lookup to the yts api
     const result = await checkPPTApi(imdbID, "movie");
 
