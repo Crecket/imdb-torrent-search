@@ -1,6 +1,7 @@
 
-.imdb-torrent-search {
+#imdb-torrent-search-inline {
   color: white;
+
   .imdb-torrent-search-seeds {
     color: limegreen;
   }
@@ -8,7 +9,17 @@
   .imdb-torrent-search-peers {
     color: red;
   }
-  tr {
-    text-align: left;
+
+  .imdb-torrent-search-links {
+    margin-left: 20px;
+  }
+
+  .imdb-torrent-search-table {
+    margin-left: 20px;
+
+    tr {
+      text-align: left;
+    }
   }
 }
+

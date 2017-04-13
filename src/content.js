@@ -6,16 +6,19 @@ require('./scss/content.scss');
 // libraries
 require("babel-core/register");
 require("babel-polyfill");
-const Logger = require('./Helpers/Logger');
 const Url = require('url');
 const $ = require('jquery');
 const axios = require('axios');
 
-// constants
-const magnetImageUrl = chrome.extension.getURL("img/icon-magnet.gif");
+// extension files
+const Logger = require('./Helpers/Logger');
+const Templates = require('./Templates');
 
 // whether the inline element is visible
 let isVisible = false;
+
+// magnet image
+const magnetImageUrl = chrome.extension.getURL("img/icon-magnet.gif");
 
 /**
  * Do a lookup tp the yts api using a title
@@ -26,7 +29,7 @@ let isVisible = false;
 const start = async () => {
     // the movie info
     let movieTorrents = [];
-    let movieInfo = {};
+    let movieInfo = false;
 
     // get the title from html and parse it
     const title = $('.title_wrapper h1').text();
@@ -48,12 +51,10 @@ const start = async () => {
         const torrents = movieInfo.torrents;
         torrents.map(torrent => {
 
-            Logger.debug(torrent);
-
             // the full magnet url
             const magneturl = 'magnet:?' +
                 `xt=urn:btih:${torrent.hash}&` +
-                `dn=${encodeURIComponent(movieInfo.title_long)}&` +
+                `dn=${encodeURIComponent(movieInfo.title_long + " - " + torrent.quality + " - " + torrent.size)}&` +
                 'tr=http://track.one:1234/announce&' +
                 'tr=udp://open.demonii.com:1337/announce&' +
                 'tr=udp://tracker.openbittorrent.com:80&' +
@@ -80,7 +81,7 @@ const start = async () => {
     }
 
     // update the inline result
-    displayInline(movieInfo, movieTorrents, isVisible);
+    displayInline(title, movieInfo, movieTorrents, isVisible);
 
     // startup was successful
     return true;
@@ -94,65 +95,20 @@ const start = async () => {
  * @param isVisible
  * @returns {*|jQuery}
  */
-const displayInline = (movieInfo, movieTorrents, isVisible) => {
+const displayInline = (title, movieInfo, movieTorrents, isVisible) => {
     // if not visible, remove and don't do anything else
     if (!isVisible) return $('#imdb-torrent-search-inline').html("");
 
-    // encode the title without non alphanumeric
-    const encodedTitle = encodeURIComponent(movieInfo.title.replace(/[^0-9a-z ]/gi, ''));
-
-    let torrentList = "";
-    movieTorrents.map(torrent => {
-        torrentList += `<tr>
-            <td>${torrent.quality}</td>
-            <td>${torrent.size}</td>
-            <td>
-                <span class="imdb-torrent-search-seeds">${torrent.seeds}</span> /
-                <span class="imdb-torrent-search-peers">${torrent.peers}</span>
-            </td>
-            <td>
-                <a href="${torrent.magnet_url}">
-                    <img id="imdb-torrent-search-icon" src="${magnetImageUrl}">
-                </a>
-            </td>
-        </tr>`;
-    });
+    // generate templates
+    const table = Templates.table(movieTorrents);
+    const links = Templates.links(movieInfo ? movieInfo.title_long : title);
 
     // render the results
     $('#imdb-torrent-search-inline').html(`
-        <br/>
-        <table class="cast_list imdb-torrent-search">
-        <thead>
-            <tr>
-                <th>Quality</th>
-                <th>Size</th>
-                <th>Seeds / Peers</th>
-                <th>DL</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${torrentList}
-            <tr>
-                <td rowspan="5">
-                    <p>Search links:<p/>
-                    <a href="https://thepiratebay.org/search/${encodedTitle}/0/99/0" target="_blank">
-                        <img src="${chrome.extension.getURL("img/tpb-favicon.png")}"/>
-                    </a>
-                    <a href="https://1337x.to/search/${encodedTitle}/seeders/desc/1/" target="_blank">
-                        <img src="${chrome.extension.getURL("img/1337x-favicon.png")}"/>
-                    </a>
-                    <a href="https://extratorrent.cc/search/?search=${encodedTitle}&s_cat=&pp=&srt=seeds&order=desc" target="_blank">
-                        <img src="${chrome.extension.getURL("img/extratorrent-favicon.png")}"/>
-                    </a>
-                    <a href="https://torrents.me/search/${encodedTitle}/" target="_blank">
-                        <img src="${chrome.extension.getURL("img/torrents-favicon.png")}"/>
-                    </a>
-                    <a href="https://rarbg.to/torrents.php?search=${encodedTitle}/" target="_blank">
-                        <img src="${chrome.extension.getURL("img/rargb-favicon.png")}"/>
-                    </a>
-                </td>
-            </tr>
-        </tbody></table>
+        <hr/>
+        ${table}
+        <hr/>
+        ${links}
     `);
 }
 
