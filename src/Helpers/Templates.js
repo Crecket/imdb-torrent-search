@@ -15,16 +15,16 @@ const createTable = (movieTorrents) => {
     //generate a list of torrents
     movieTorrents.map(torrent => {
         torrentList += `<tr>
+            <td class="download-icon">
+                <a href="${torrent.magnet_url}">
+                    <img id="imdb-torrent-search-icon" src="${magnetImageUrl}">
+                </a>
+            </td>
             <td>${torrent.quality}</td>
             <td>${torrent.size}</td>
             <td>
                 <span class="imdb-torrent-search-seeds">${torrent.seeds}</span> /
                 <span class="imdb-torrent-search-peers">${torrent.peers}</span>
-            </td>
-            <td>
-                <a href="${torrent.magnet_url}">
-                    <img id="imdb-torrent-search-icon" src="${magnetImageUrl}">
-                </a>
             </td>
         </tr>`;
     });
@@ -34,10 +34,10 @@ const createTable = (movieTorrents) => {
         <table class="cast_list imdb-torrent-search-table">
             <thead>
                 <tr>
+                    <th></th>
                     <th>Quality</th>
                     <th>Size</th>
                     <th>Seeds / Peers</th>
-                    <th>DL</th>
                 </tr>
             </thead>
             <tbody>

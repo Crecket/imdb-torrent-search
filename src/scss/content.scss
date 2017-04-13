@@ -15,7 +15,11 @@
   }
 
   .imdb-torrent-search-table {
-    margin-left: 20px;
+    margin-left: 10px;
+
+    .download-icon{
+      width: 20px;
+    }
 
     tr {
       text-align: left;
