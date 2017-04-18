@@ -15,9 +15,8 @@ const DEV = process.env.NODE_ENV !== "production";
 
 let config = {
     entry: {
-        // React app
-        "popup": `${SRC_DIR}/popup.js`,
-        "content": `${SRC_DIR}/content.js`
+        popup: `${SRC_DIR}/popup.js`,
+        content: `${SRC_DIR}/content.js`
     },
     output: {
         path: BUILD_DIR,
@@ -51,6 +50,10 @@ let config = {
             "process.env.DEBUG": JSON.stringify(DEV),
             "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
             "process.env.WEBPACK_MODE": JSON.stringify(true)
+        }),
+        new webpack.ProvidePlugin({
+            $: 'jquery',
+            jQuery: 'jquery'
         })
     ],
     module: {
@@ -74,6 +77,12 @@ let config = {
                     fallback: "style-loader!css-loader!sass-loader",
                     use: "css-loader!sass-loader"
                 })
+            },
+            {
+                test: /\.(ttf|eot|svg|woff|woff2)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+                use: [{
+                    loader: "file-loader?name=build/fonts/[name].[ext]"
+                }]
             }
         ]
     }

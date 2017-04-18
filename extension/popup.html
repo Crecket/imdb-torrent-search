@@ -7,8 +7,49 @@
     <link rel='stylesheet' href='/build/popup.css'>
     <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto'>
 </head>
-<body >
-There is nothing here for now :(
+<body class=" blue lighten-3">
+
+<div class="card grey lighten-4">
+    <label class="card-content white-text center-align">
+        <div class="card-title" style="color: black;">
+            Display the torrent list by default?
+            <div class="switch">
+                <label>
+                    Off
+                    <input type="checkbox" class="autoshow-torrents-checkbox">
+                    <span class="lever"></span>
+                    On
+                </label>
+            </div>
+        </div>
+        <div class="card-image">
+            <img src="/img/torrent_list_previw.png">
+        </div>
+    </label>
+</div>
+
+<div class="card grey lighten-4">
+    <label class="card-content white-text center-align">
+        <div class="card-image">
+            <img src="/img/torrent_links_previw.png">
+            <div class="card-title" style="color: white;">
+                Display the manual search links?
+                <div class="switch">
+                    <label>
+                        Off
+                        <input type="checkbox" class="autoshow-links-checkbox">
+                        <span class="lever"></span>
+                        On
+                    </label>
+                </div>
+            </div>
+        </div>
+    </label>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
 <script src="/build/popup.js"></script>
+<script src="/js/script.js"></script>
 </body>
 </html>

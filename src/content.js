@@ -1,21 +1,23 @@
 "use strict";
 
 // styles
-require('./scss/content.scss');
+require("./scss/content.scss");
 
 // libraries
 require("babel-core/register");
 require("babel-polyfill");
-const Url = require('url');
-const $ = require('jquery');
-const axios = require('axios');
+const Url = require("url");
+const $ = require("jquery");
+const axios = require("axios");
 
 // extension files
-const Logger = require('./Helpers/Logger');
-const Templates = require('./Helpers/Templates');
+const Logger = require("./Helpers/Logger");
+const Templates = require("./Helpers/Templates");
 
 // global settings for caching
 let isVisible = false;
+let displayLinks = false;
+let autoShow = false;
 let showTorrents = {};
 let movieTorrents = [];
 
@@ -23,7 +25,7 @@ let movieTorrents = [];
 const logoImageUrl = chrome.extension.getURL("img/logo-16x16.png");
 
 // remove /title/ and trailing slash from pathname
-const imdbID = location.pathname.replace(/(\/title\/)|\//g, '');
+const imdbID = location.pathname.replace(/(\/title\/)|\//g, "");
 
 /**
  * Check the imdb info for this page and do a corresponding api call to fetch the results
@@ -59,7 +61,22 @@ const start = async () => {
 
     // startup was successful
     return true;
-}
+};
+
+/**
+ * Toggle the current output state
+ */
+const toggleOutput = () => {
+    // toggle show inline state
+    isVisible = !isVisible;
+
+    // show loader if we're showing the inline result
+    if (isVisible) $("#imdb-torrent-search-inline").html("<p>Loading</p>");
+
+    // start the extension content script
+    start().then(_ => {
+    }).catch(Logger.error);
+};
 
 /**
  * Do a lookup to the popcorntime api for the imdb id
@@ -91,7 +108,7 @@ const getSeries = async () => {
     Logger.debug("Show result", showTorrents);
 
     return Templates.showTable(showTorrents);
-}
+};
 
 /**
  * Fetches torrent information for a given imdbID
@@ -109,13 +126,15 @@ const getMovie = async () => {
     // check if we got enough results
     if (Object.keys(result.torrents).length > 0) {
         // prefer en language but fallback to the first key in the list
-        const lang = result.torrents.en ? "en" : (Object.keys(result.torrents).shift());
+        const lang = result.torrents.en
+            ? "en"
+            : Object.keys(result.torrents).shift();
 
         // get torrent list
         const torrents = result.torrents[lang];
 
         // loop through available torrents
-        Object.keys(torrents).map((quality) => {
+        Object.keys(torrents).map(quality => {
             // get torrent info
             const torrent = torrents[quality];
 
@@ -146,19 +165,21 @@ const getMovie = async () => {
  */
 const displayInline = (imdbInfo, htmlOutput, isVisible) => {
     // if not visible, remove and don't do anything else
-    if (!isVisible) return $('#imdb-torrent-search-inline').html("");
+    if (!isVisible) return $("#imdb-torrent-search-inline").html("");
 
     // generate templates
-    const links = Templates.links(imdbInfo.Title);
+    const links = displayLinks ? Templates.links(imdbInfo.Title) : "";
 
     // render the results
-    $('#imdb-torrent-search-inline').html(`
+    $("#imdb-torrent-search-inline").html(
+        `
         <hr/>
         ${htmlOutput}
         <hr/>
         ${links}
-    `);
-}
+    `
+    );
+};
 
 /**
  * Does lookup to the popcorntime API
@@ -169,8 +190,10 @@ const displayInline = (imdbInfo, htmlOutput, isVisible) => {
  */
 const checkPPTApi = async (imdbID, type = "movie") => {
     // do the api call and return the result
-    return await axios.get(`https://tv-v2.api-fetch.website/${type}/${imdbID}`).then(result => result.data);
-}
+    return await axios
+        .get(`https://tv-v2.api-fetch.website/${type}/${imdbID}`)
+        .then(result => result.data);
+};
 
 /**
  * Get info from the unofficial imdb api for this imdbID
@@ -179,24 +202,30 @@ const checkPPTApi = async (imdbID, type = "movie") => {
  */
 const getImdbInfo = async () => {
     // do the api call
-    return await axios.get(`http://www.omdbapi.com/?i=${imdbID}`).then(result => result.data);
+    return await axios
+        .get(`http://www.omdbapi.com/?i=${imdbID}`)
+        .then(result => result.data);
 };
 
 // create image for click event and other interactions
-$('.title_wrapper h1').append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
+$(".title_wrapper h1").append(
+    `<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`
+);
 
 // append the inline block so we can modify it more easily
-$('.title_block').append(`<div id="imdb-torrent-search-inline"></div>`)
+$(".title_block").append(`<div id="imdb-torrent-search-inline"></div>`);
 
 // attach click listener
-$('#imdb-torrent-search-icon').on('click', () => {
-    // toggle show inline state
-    isVisible = !isVisible;
+$("#imdb-torrent-search-icon").on("click", () => {
+    toggleOutput();
+});
 
-    // show loader if we're showing the inline result
-    if (isVisible) $('#imdb-torrent-search-inline').html('<p>Loading</p>');
+chrome.storage.local.get(["autoShow", "displayLinks"], function (res) {
+    autoShow = !!res.autoShow;
+    displayLinks = !!res.displayLinks;
 
-    // start the extension content script
-    start().then(_ => {
-    }).catch(Logger.error);
+    if (autoShow) {
+        // show the torrent resutls by default
+        toggleOutput();
+    }
 });
