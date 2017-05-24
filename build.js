@@ -1,4 +1,5 @@
 const fs = require("fs");
+const del = require("del");
 const archiver = require("archiver");
 const package_json = require("./package.json");
 
@@ -19,10 +20,13 @@ archive.on("error", err => {
 // pipe all output into the writestream
 archive.pipe(output);
 
-// add files from extension folder to the zip
-archive.glob("**/*", {
-    cwd: "extension"
-});
+// remove files we don't need/want
+del(["extension/build/**/*.map", "extension/build/fonts/**"]).then(paths => {
+    // add files from extension folder to the zip
+    archive.glob("**/*", {
+        cwd: "extension"
+    });
 
-// finalize the zip file and write it
-archive.finalize();
+    // finalize the zip file and write it
+    archive.finalize();
+});

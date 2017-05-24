@@ -29,7 +29,7 @@ let config = {
         modules: [
             "node_modules",
             path.resolve(__dirname, "/node_modules"),
-            path.resolve(__dirname, "/src"),
+            path.resolve(__dirname, "/src")
         ]
     },
     // devtool for source maps
@@ -45,24 +45,29 @@ let config = {
         }),
         // SwPrecachePlugin,
         new webpack.DefinePlugin({
-            "PRODUCTION_MODE": JSON.stringify(!DEV),
-            "DEVELOPMENT_MODE": JSON.stringify(DEV),
+            PRODUCTION_MODE: JSON.stringify(!DEV),
+            DEVELOPMENT_MODE: JSON.stringify(DEV),
             "process.env.DEBUG": JSON.stringify(DEV),
-            "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
+            "process.env.NODE_ENV": JSON.stringify(
+                process.env.NODE_ENV || "development"
+            ),
             "process.env.WEBPACK_MODE": JSON.stringify(true)
         }),
         new webpack.ProvidePlugin({
-            $: 'jquery',
-            jQuery: 'jquery'
+            $: "jquery",
+            jQuery: "jquery"
         })
     ],
     module: {
         rules: [
             {
                 test: /\.jsx?$/,
-                use: [{
-                    loader: "babel-loader"
-                }]
+                exclude: /(node_modules|bower_components)/,
+                use: [
+                    {
+                        loader: "babel-loader"
+                    }
+                ]
             },
             {
                 test: /\.css$/,
@@ -80,27 +85,31 @@ let config = {
             },
             {
                 test: /\.(ttf|eot|svg|woff|woff2)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-                use: [{
-                    loader: "file-loader?name=build/fonts/[name].[ext]"
-                }]
+                use: [
+                    {
+                        loader: "file-loader?name=build/fonts/[name].[ext]"
+                    }
+                ]
             }
         ]
     }
-}
+};
 
 if (!DEV) {
     // production only plugins
 
     // uglify plugin
-    config.plugins.push(new webpack.optimize.UglifyJsPlugin({
-        sourceMap: true,
-        minimize: true,
-        comments: false,
-        compress: {
-            warnings: false,
-            drop_console: true
-        }
-    }));
+    config.plugins.push(
+        new webpack.optimize.UglifyJsPlugin({
+            sourceMap: true,
+            minimize: true,
+            comments: false,
+            compress: {
+                warnings: false,
+                drop_console: true
+            }
+        })
+    );
 } else {
     // development only plugins
 }
