@@ -1,16 +1,18 @@
-const fs = require('fs');
-const archiver = require('archiver');
-const package = require('./package.json');
+const fs = require("fs");
+const archiver = require("archiver");
+const package_json = require("./package.json");
 
 // create output stream
-let output = fs.createWriteStream(__dirname + '/releases/extension_v' + package.version + '.zip');
+let output = fs.createWriteStream(
+    __dirname + "/releases/extension_v" + package_json.version + ".zip"
+);
 // create new zip file
-let archive = archiver('zip');
+let archive = archiver("zip");
 
-output.on('close', () => {
-    console.log(archive.pointer() + ' total bytes');
+output.on("close", () => {
+    console.log(archive.pointer() + " total bytes");
 });
-archive.on('error', (err) => {
+archive.on("error", err => {
     throw err;
 });
 

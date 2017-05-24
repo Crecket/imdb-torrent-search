@@ -24,8 +24,9 @@ let movieTorrents = [];
 // magnet image
 const logoImageUrl = chrome.extension.getURL("img/logo-16x16.png");
 
-// remove /title/ and trailing slash from pathname
-const imdbID = location.pathname.replace(/(\/title\/)|\//g, "");
+// get the imdb id from the pathname
+const imdbIDmatches = location.pathname.match(/(tt[0-9]{5,8})/);
+const imdbID = imdbIDmatches[0];
 
 /**
  * Check the imdb info for this page and do a corresponding api call to fetch the results
@@ -74,8 +75,7 @@ const toggleOutput = () => {
     if (isVisible) $("#imdb-torrent-search-inline").html("<p>Loading</p>");
 
     // start the extension content script
-    start().then(_ => {
-    }).catch(Logger.error);
+    start().then(_ => {}).catch(Logger.error);
 };
 
 /**
@@ -197,14 +197,25 @@ const checkPPTApi = async (imdbID, type = "movie") => {
 
 /**
  * Get info from the unofficial imdb api for this imdbID
- *
  * @returns {Promise.<*|Promise.<TResult>>}
  */
 const getImdbInfo = async () => {
+    // extract title
+    const imdbTitle = $(
+        ".title_block .title_bar_wrapper .title_wrapper h1"
+    ).text();
+    // extract secondary text
+    const typeHtml = $(
+        ".heroic-overview .title_block .title_bar_wrapper a:link"
+    ).text();
+    // check if the secondary text contains "Series"
+    const typeMatches = typeHtml.match(/(Series)/);
+
     // do the api call
-    return await axios
-        .get(`http://www.omdbapi.com/?i=${imdbID}`)
-        .then(result => result.data);
+    return {
+        Title: imdbTitle,
+        Type: typeMatches && typeMatches.length > 0 ? "series" : "movie"
+    };
 };
 
 // create image for click event and other interactions
@@ -220,7 +231,7 @@ $("#imdb-torrent-search-icon").on("click", () => {
     toggleOutput();
 });
 
-chrome.storage.local.get(["autoShow", "displayLinks"], function (res) {
+chrome.storage.local.get(["autoShow", "displayLinks"], function(res) {
     autoShow = !!res.autoShow;
     displayLinks = !!res.displayLinks;
 

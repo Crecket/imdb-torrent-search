@@ -3,7 +3,7 @@
  * @param movieTorrents
  * @returns {string}
  */
-const createMovieTable = (movieTorrents) => {
+const createMovieTable = movieTorrents => {
     if (movieTorrents.length < 1) {
         return `<p>No direct torrents were found.</p>`;
     }
@@ -45,14 +45,14 @@ const createMovieTable = (movieTorrents) => {
             </tbody>
         </table>
     `;
-}
+};
 
 /**
  *
  * @param showEpisodes
  * @returns {string}
  */
-const createShowTable = (showTorrents) => {
+const createShowTable = showTorrents => {
     if (Object.keys(showTorrents).length < 1) {
         return `<p>No direct torrents were found.</p>`;
     }
@@ -89,17 +89,19 @@ const createShowTable = (showTorrents) => {
 
                 // ignore quality 0
                 if (quality === "0") return;
-                qualityList.push(`
+                qualityList.push(
+                    `
                     <a href="${qualityInfo.url}">
                         <img id="imdb-torrent-search-icon" src="${magnetImageUrl}"> ${quality} 
                     </a>
-                `);
+                `
+                );
             });
 
             htmlOutput += `<tr>
                 <td>${episode}</td>
                 <td>${episodeInfo.title}</td>
-                <td>${qualityList.join(', ')}</td>
+                <td>${qualityList.join(", ")}</td>
             </tr>`;
         });
     });
@@ -112,16 +114,18 @@ const createShowTable = (showTorrents) => {
             </tbody>
         </table>
     `;
-}
+};
 
 /**
  *
  * @param title
  * @returns {string}
  */
-const createLinks = (title) => {
+const createLinks = title => {
     // encode the title without non alphanumeric
-    const encodedTitle = encodeURIComponent(title.replace(/[^0-9a-z ]/gi, '').trim());
+    const encodedTitle = encodeURIComponent(
+        title.replace(/[^0-9a-z ]/gi, "").trim()
+    );
 
     // return the list of links to search pages for
     return `
@@ -144,10 +148,10 @@ const createLinks = (title) => {
         </a>
     </div>
     `;
-}
+};
 
 module.exports = {
     movieTable: createMovieTable,
     showTable: createShowTable,
-    links: createLinks,
-}
+    links: createLinks
+};
