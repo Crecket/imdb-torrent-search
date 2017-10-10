@@ -55,10 +55,10 @@ const start = async () => {
             htmlOutput = await getSeries();
     }
 
-    Logger.debug("Start end", htmlOutput);
+    Logger.debug("Start end", {html: htmlOutput});
 
     // update the inline result
-    displayInline(imdbInfo, htmlOutput, isVisible);
+    await displayInline(imdbInfo, htmlOutput, isVisible);
 
     // startup was successful
     return true;
@@ -163,12 +163,12 @@ const getMovie = async () => {
  * @param isVisible
  * @returns {*|jQuery}
  */
-const displayInline = (imdbInfo, htmlOutput, isVisible) => {
+const displayInline = async (imdbInfo, htmlOutput, isVisible) => {
     // if not visible, remove and don't do anything else
     if (!isVisible) return $("#imdb-torrent-search-inline").html("");
 
     // generate templates
-    const links = displayLinks ? Templates.links(imdbInfo.Title) : "";
+    const links = displayLinks ? await Templates.links(imdbInfo.Title) : "";
 
     // render the results
     $("#imdb-torrent-search-inline").html(

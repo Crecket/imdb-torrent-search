@@ -1,3 +1,5 @@
+const Logger = require("./Logger");
+
 /**
  *
  * @param movieTorrents
@@ -121,33 +123,56 @@ const createShowTable = showTorrents => {
  * @param title
  * @returns {string}
  */
-const createLinks = title => {
-    // encode the title without non alphanumeric
-    const encodedTitle = encodeURIComponent(
-        title.replace(/[^0-9a-z ]/gi, "").trim()
-    );
+const createLinks = async title => {
+    return new Promise((resolve, reject) => {
+        // encode the title without non alphanumeric
+        const encodedTitle = encodeURIComponent(
+            title.replace(/[^0-9a-z ]/gi, "").trim()
+        );
 
-    // return the list of links to search pages for
-    return `
-     <div class="imdb-torrent-search-links">
-        <b>Search links:<p/>
-        <a href="https://thepiratebay.org/search/${encodedTitle}/0/99/0" target="_blank">
-            <img src="${chrome.extension.getURL("img/tpb-favicon.png")}"/>
-        </a>
-        <a href="https://1337x.to/search/${encodedTitle}/seeders/desc/1/" target="_blank">
-            <img src="${chrome.extension.getURL("img/1337x-favicon.png")}"/>
-        </a>
-        <a href="https://extratorrent.cc/search/?search=${encodedTitle}&s_cat=&pp=&srt=seeds&order=desc" target="_blank">
-            <img src="${chrome.extension.getURL("img/extratorrent-favicon.png")}"/>
-        </a>
-        <a href="https://torrents.me/search/${encodedTitle}/" target="_blank">
-            <img src="${chrome.extension.getURL("img/torrents-favicon.png")}"/>
-        </a>
-        <a href="https://rarbg.to/torrents.php?search=${encodedTitle}/" target="_blank">
-            <img src="${chrome.extension.getURL("img/rargb-favicon.png")}"/>
-        </a>
-    </div>
-    `;
+        // fetch the latest customUrls
+        chrome.storage.local.get(["customUrls"], result => {
+            let customUrls =
+                result.customUrls !== undefined ? result.customUrls : [];
+
+            Logger.debug("customUrls", customUrls);
+
+            // generate a list of urls and icons for the template
+            let customUrlsResult = "";
+            customUrls.map(customUrl => {
+                const urlTemplate = customUrl.urlTemplate.replace(
+                    /\$\{name\}/,
+                    encodedTitle
+                );
+
+                customUrlsResult += `
+<a href="${urlTemplate}" target="_blank">
+    <img src="${customUrl.iconUrl}"/>
+</a>`;
+            });
+
+            // return the list of links to search pages for
+            resolve(`<div class="imdb-torrent-search-links">
+    <b>Search links:<p/>
+    <a href="https://thepiratebay.org/search/${encodedTitle}/0/99/0" target="_blank">
+        <img src="${chrome.extension.getURL("img/tpb-favicon.png")}"/>
+    </a>
+    <a href="https://1337x.to/search/${encodedTitle}/1/" target="_blank">
+        <img src="${chrome.extension.getURL("img/1337x-favicon.png")}"/>
+    </a>
+    <a href="https://extratorrent.cc/search/?search=${encodedTitle}&s_cat=&pp=&srt=seeds&order=desc" target="_blank">
+        <img src="${chrome.extension.getURL("img/extratorrent-favicon.png")}"/>
+    </a>
+    <a href="https://torrents.me/search/${encodedTitle}/" target="_blank">
+        <img src="${chrome.extension.getURL("img/torrents-favicon.png")}"/>
+    </a>
+    <a href="https://rarbg.to/torrents.php?search=${encodedTitle}/" target="_blank">
+        <img src="${chrome.extension.getURL("img/rargb-favicon.png")}"/>
+    </a>
+    ${customUrlsResult}
+</div>`);
+        });
+    });
 };
 
 module.exports = {
