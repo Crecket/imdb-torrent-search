@@ -6,9 +6,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack --debug --watch --progress --colors",
     "build": "cross-env NODE_ENV=production webpack --progress --colors",
-    "release": "node build.js",
-    "test": "jest --coverage",
-    "test:dev": "jest --watch --coverage"
+    "release": "npm run build && node build.js"
   },
   "engines": {
     "node": ">=7.8.0"
