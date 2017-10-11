@@ -1,6 +1,6 @@
 {
   "name": "imdb-search",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A simple extension that displays torrents for IMDB movies and series directly onto the page",
   "main": "app.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "release": "npm run build && node build.js"
   },
   "engines": {
-    "node": ">=7.8.0"
+    "node": ">=8.0.0"
   },
   "jest": {
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.jsx?$",

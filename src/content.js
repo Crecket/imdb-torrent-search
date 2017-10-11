@@ -211,9 +211,12 @@ const getImdbInfo = async () => {
     // check if the secondary text contains "Series"
     const typeMatches = typeHtml.match(/(Series)/);
 
+    // remove year from title
+    const imdbTitleText = imdbTitle.replace(/\([0-9]*\)/, "").trim();
+
     // do the api call
     return {
-        Title: imdbTitle,
+        Title: imdbTitleText,
         Type: typeMatches && typeMatches.length > 0 ? "series" : "movie"
     };
 };
