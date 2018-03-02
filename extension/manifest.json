@@ -3,12 +3,13 @@
   "name": "IMDB Torrent Search",
   "short_name": "IMDB Torrent Search",
   "description": "A simple extension that displays torrents for IMDB movies and series directly onto the page",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "offline_enabled": false,
   "content_scripts": [
     {
       "matches": [
-        "http://www.imdb.com/title/*"
+        "http://www.imdb.com/title/*",
+        "https://www.imdb.com/title/*"
       ],
       "css": [
         "build/content.css"
