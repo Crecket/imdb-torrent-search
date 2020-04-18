@@ -41,8 +41,6 @@ const start = async () => {
     // get the info for this movie/series so we have to parse less html
     const imdbInfo = await getImdbInfo();
 
-    console.log(imdbInfo);
-
     Logger.debug("Start ", imdbInfo);
 
     // check which type of call we have to do
@@ -78,7 +76,7 @@ const toggleOutput = () => {
 
     // start the extension content script
     start()
-        .then((_) => {})
+        .then(_ => {})
         .catch(Logger.error);
 };
 
@@ -97,7 +95,7 @@ const getSeries = async () => {
     if (!result) return "No download results";
 
     // loop through episodes and generated a sorted/formatted object
-    result.episodes.map((episode) => {
+    result.episodes.map(episode => {
         // if doesn't exist yet create empty object slot
         if (!showTorrents[episode.season]) showTorrents[episode.season] = {};
         // add episode to this season
@@ -105,7 +103,7 @@ const getSeries = async () => {
             episode: episode.episode,
             season: episode.season,
             title: episode.title,
-            torrents: episode.torrents,
+            torrents: episode.torrents
         };
     });
 
@@ -136,7 +134,7 @@ const getMovie = async () => {
         const torrents = result.torrents[lang];
 
         // loop through available torrents
-        Object.keys(torrents).map((quality) => {
+        Object.keys(torrents).map(quality => {
             // get torrent info
             const torrent = torrents[quality];
 
@@ -147,7 +145,7 @@ const getMovie = async () => {
                 quality: quality,
                 size: torrent.filesize,
                 size_bytes: torrent.size,
-                magnet_url: torrent.url,
+                magnet_url: torrent.url
             });
         });
     }
@@ -172,8 +170,6 @@ const displayInline = async (imdbInfo, htmlOutput, isVisible) => {
     // generate templates
     const links = displayLinks ? await Templates.links(imdbInfo.Title) : "";
 
-    console.log(links);
-
     // render the results
     $("#imdb-torrent-search-inline").html(
         `
@@ -194,7 +190,11 @@ const displayInline = async (imdbInfo, htmlOutput, isVisible) => {
  */
 const checkPPTApi = async (imdbID, type = "movie") => {
     // do the api call and return the result
-    return await axios.get(`https://tv-v2.api-fetch.sh/${type}/${imdbID}`).then((result) => result.data);
+    return new Promise(async (resolve, reject) => {
+        chrome.runtime.sendMessage({ type: type, imdbID: imdbID }, response => {
+            resolve(response.data);
+        });
+    });
 };
 
 /**
@@ -215,7 +215,7 @@ const getImdbInfo = async () => {
     // do the api call
     return {
         Title: imdbTitleText,
-        Type: typeMatches && typeMatches.length > 0 ? "series" : "movie",
+        Type: typeMatches && typeMatches.length > 0 ? "series" : "movie"
     };
 };
 
@@ -230,7 +230,7 @@ $("#imdb-torrent-search-icon").on("click", () => {
     toggleOutput();
 });
 
-chrome.storage.local.get(["autoShow", "displayLinks"], function (res) {
+chrome.storage.local.get(["autoShow", "displayLinks"], function(res) {
     autoShow = !!res.autoShow;
     displayLinks = !!res.displayLinks;
 

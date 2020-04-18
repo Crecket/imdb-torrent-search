@@ -60,8 +60,6 @@ $(document.body).on("click", ".remove-custom-link", (event) => {
         // default to empty array
         let customUrls = result.customUrls !== undefined ? result.customUrls : [];
 
-        console.log($(event.target));
-
         const urlKey = $(event.target).data("url-key");
         if (!urlKey) return;
 
