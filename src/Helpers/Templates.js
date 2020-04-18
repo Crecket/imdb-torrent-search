@@ -5,7 +5,7 @@ const Logger = require("./Logger");
  * @param movieTorrents
  * @returns {string}
  */
-const createMovieTable = movieTorrents => {
+const createMovieTable = (movieTorrents) => {
     if (movieTorrents.length < 1) {
         return `<p>No direct torrents were found.</p>`;
     }
@@ -15,7 +15,7 @@ const createMovieTable = movieTorrents => {
 
     let torrentList = "";
     //generate a list of torrents
-    movieTorrents.map(torrent => {
+    movieTorrents.map((torrent) => {
         torrentList += `<tr>
             <td class="download-icon">
                 <a href="${torrent.magnet_url}">
@@ -54,7 +54,7 @@ const createMovieTable = movieTorrents => {
  * @param showEpisodes
  * @returns {string}
  */
-const createShowTable = showTorrents => {
+const createShowTable = (showTorrents) => {
     if (Object.keys(showTorrents).length < 1) {
         return `<p>No direct torrents were found.</p>`;
     }
@@ -64,7 +64,7 @@ const createShowTable = showTorrents => {
     const magnetImageUrl = chrome.extension.getURL("img/icon-magnet.gif");
 
     // loop through generated object
-    Object.keys(showTorrents).map(season => {
+    Object.keys(showTorrents).map((season) => {
         // get info for this season
         const seasonList = showTorrents[season];
 
@@ -76,7 +76,7 @@ const createShowTable = showTorrents => {
         <tr><th>Ep</th><th>Title</th><th>Quality</th></tr>`;
 
         // loop through episodes for this season
-        Object.keys(seasonList).map(episode => {
+        Object.keys(seasonList).map((episode) => {
             // get info for this episode
             const episodeInfo = seasonList[episode];
 
@@ -85,7 +85,7 @@ const createShowTable = showTorrents => {
 
             // loop through torrents and return a html string
             let qualityList = [];
-            Object.keys(episodeInfo.torrents).map(quality => {
+            Object.keys(episodeInfo.torrents).map((quality) => {
                 // get info for this quality type
                 const qualityInfo = episodeInfo.torrents[quality];
 
@@ -94,7 +94,7 @@ const createShowTable = showTorrents => {
                 qualityList.push(
                     `
                     <a href="${qualityInfo.url}">
-                        <img id="imdb-torrent-search-icon" src="${magnetImageUrl}"> ${quality} 
+                        <img id="imdb-torrent-search-icon" src="${magnetImageUrl}"> ${quality}
                     </a>
                 `
                 );
@@ -123,27 +123,21 @@ const createShowTable = showTorrents => {
  * @param title
  * @returns {string}
  */
-const createLinks = async title => {
+const createLinks = async (title) => {
     return new Promise((resolve, reject) => {
         // encode the title without non alphanumeric
-        const encodedTitle = encodeURIComponent(
-            title.replace(/[^0-9a-z ]/gi, "").trim()
-        );
+        const encodedTitle = encodeURIComponent(title.replace(/[^0-9a-z ]/gi, "").trim());
 
         // fetch the latest customUrls
-        chrome.storage.local.get(["customUrls"], result => {
-            let customUrls =
-                result.customUrls !== undefined ? result.customUrls : [];
+        chrome.storage.local.get(["customUrls"], (result) => {
+            let customUrls = result.customUrls !== undefined ? result.customUrls : [];
 
             Logger.debug("customUrls", customUrls);
 
             // generate a list of urls and icons for the template
             let customUrlsResult = "";
-            customUrls.map(customUrl => {
-                const urlTemplate = customUrl.urlTemplate.replace(
-                    /\$\{name\}/,
-                    encodedTitle
-                );
+            customUrls.map((customUrl, key) => {
+                const urlTemplate = customUrl.urlTemplate.replace(/\$\{name\}/, encodedTitle);
 
                 customUrlsResult += `
 <a href="${urlTemplate}" target="_blank">
@@ -178,5 +172,5 @@ const createLinks = async title => {
 module.exports = {
     movieTable: createMovieTable,
     showTable: createShowTable,
-    links: createLinks
+    links: createLinks,
 };

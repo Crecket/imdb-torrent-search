@@ -4,11 +4,9 @@ const archiver = require("archiver");
 const package_json = require("./package.json");
 
 // create output stream
-let output = fs.createWriteStream(
-    __dirname + "/releases/extension_v" + package_json.version + ".zip"
-);
+const output = fs.createWriteStream(__dirname + "/releases/extension_v" + package_json.version + ".zip");
 // create new zip file
-let archive = archiver("zip");
+const archive = archiver("zip");
 
 output.on("close", () => {
     console.log(archive.pointer() + " total bytes");

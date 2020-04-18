@@ -1,29 +1,27 @@
-
 #imdb-torrent-search-inline {
-  color: white;
+    color: white;
 
-  .imdb-torrent-search-seeds {
-    color: limegreen;
-  }
-
-  .imdb-torrent-search-peers {
-    color: red;
-  }
-
-  .imdb-torrent-search-links {
-    margin-left: 20px;
-  }
-
-  .imdb-torrent-search-table {
-    margin-left: 10px;
-
-    .download-icon{
-      width: 20px;
+    .imdb-torrent-search-seeds {
+        color: limegreen;
     }
 
-    tr {
-      text-align: left;
+    .imdb-torrent-search-peers {
+        color: red;
     }
-  }
+
+    .imdb-torrent-search-links {
+        margin-left: 20px;
+    }
+
+    .imdb-torrent-search-table {
+        margin-left: 10px;
+
+        .download-icon {
+            width: 20px;
+        }
+
+        tr {
+            text-align: left;
+        }
+    }
 }
-

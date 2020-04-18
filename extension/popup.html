@@ -1,95 +1,97 @@
 <html>
-<head>
-    <title>IMDB Torrent Search</title>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="./build/popup.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
-</head>
-<body class=" blue lighten-3">
+    <head>
+        <title>IMDB Torrent Search</title>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="./build/popup.css" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto" />
+    </head>
+    <body class="blue lighten-3">
+        <div class="card grey lighten-4">
+            <label class="card-content white-text center-align">
+                <div class="card-title" style="color: black;">
+                    Display the torrent list by default?
+                    <div class="switch">
+                        <label>
+                            Off
+                            <input type="checkbox" class="autoshow-torrents-checkbox" />
+                            <span class="lever"></span>
+                            On
+                        </label>
+                    </div>
+                </div>
+                <div class="card-image">
+                    <img src="./img/torrent_list_preview.png" />
+                </div>
+            </label>
+        </div>
 
-<div class="card grey lighten-4">
-    <label class="card-content white-text center-align">
-        <div class="card-title" style="color: black;">
-            Display the torrent list by default?
-            <div class="switch">
-                <label>
-                    Off
-                    <input type="checkbox" class="autoshow-torrents-checkbox">
-                    <span class="lever"></span>
-                    On
-                </label>
+        <div class="card grey lighten-4">
+            <label class="card-content white-text center-align">
+                <div class="card-image">
+                    <img src="./img/torrent_links_preview.png" />
+                    <div class="card-title" style="color: white;">
+                        Display the manual search links?
+                        <div class="switch">
+                            <label>
+                                Off
+                                <input type="checkbox" class="autoshow-links-checkbox" />
+                                <span class="lever"></span>
+                                On
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </label>
+        </div>
+
+        <div class="card grey lighten-4">
+            <div class="card-title black-text center-align">
+                Add custom torrent site shortlinks
             </div>
-        </div>
-        <div class="card-image">
-            <img src="./img/torrent_list_preview.png">
-        </div>
-    </label>
-</div>
+            <div class="card-content center-align">
+                <p class="left-align flow-text">
+                    The way this works is that the extension will replace ${name} with the correct movie name
+                    automatically.
+                </p>
+                <p class="left-align flow-text">
+                    The easiest way to get this link for your site is to search for a movie and replace the movie name
+                    in the url with ${name}. For example:
+                </p>
+                <blockquote class="left-align flow-text">
+                    <p>https://rarbg.to/torrents.php?search=${name}</p>
+                </blockquote>
 
-<div class="card grey lighten-4">
-    <label class="card-content white-text center-align">
-        <div class="card-image">
-            <img src="./img/torrent_links_preview.png">
-            <div class="card-title" style="color: white;">
-                Display the manual search links?
-                <div class="switch">
-                    <label>
-                        Off
-                        <input type="checkbox" class="autoshow-links-checkbox">
-                        <span class="lever"></span>
-                        On
-                    </label>
+                <form class="row" id="custom_torrent_form">
+                    <div class="input-field col s12">
+                        <input id="url_template_custom" type="text" class="validate black-text" required />
+                        <label for="url_template_custom" class="black-text">URL Template</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <input
+                            placeholder="Defaults to the page's favicon"
+                            id="icon_url_custom"
+                            type="text"
+                            class="validate black-text"
+                        />
+                        <label for="icon_url_custom" class="black-text">Icon URL - not required</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <button class="btn">Add site</button>
+                    </div>
+                </form>
+                <div>
+                    <h4>Stored custom sites</h4>
+                    <ul class="collection" id="custom-links-list"></ul>
                 </div>
             </div>
         </div>
-    </label>
-</div>
 
-<div class="card grey lighten-4">
-    <div class="card-title black-text center-align">
-        Add custom torrent site shortlinks
-    </div>
-    <div class="card-content center-align">
-        <p class="left-align flow-text">
-            The way this works is that the extension will replace ${name} with the correct movie name automatically.
-        </p>
-        <p class="left-align flow-text">
-            The easiest way to get this link for your site is to search for a movie and replace the movie name in the
-            url with
-            ${name}. For example:
-        </p>
-        <blockquote class="left-align flow-text">
-            <p>https://rarbg.to/torrents.php?search=${name}</p>
-        </blockquote>
-
-        <form class="row" id="custom_torrent_form">
-            <div class="input-field col s12">
-                <input id="url_template_custom" type="text" class="validate black-text" required>
-                <label for="url_template_custom" class="black-text">URL Template</label>
-            </div>
-            <div class="input-field col s12">
-                <input placeholder="Defaults to the page's favicon"
-                       id="icon_url_custom" type="text" class="validate black-text">
-                <label for="icon_url_custom" class="black-text">Icon URL - not required</label>
-            </div>
-            <div class="input-field col s12">
-                <button class="btn">Add site</button>
-            </div>
-        </form>
-        <div>
-            <h4>Stored custom sites</h4>
-            <ul class="collection" id="custom-links-list">
-            </ul>
-        </div>
-    </div>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
-<script src="./build/popup.js"></script>
-<script src="./js/script.js"></script>
-</body>
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
+        <script src="./build/popup.js"></script>
+        <script src="./js/script.js"></script>
+    </body>
 </html>
