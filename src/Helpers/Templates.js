@@ -154,10 +154,7 @@ const createLinks = async (title) => {
     <a href="https://1337x.to/search/${encodedTitle}/1/" target="_blank">
         <img src="${chrome.extension.getURL("img/1337x-favicon.png")}"/>
     </a>
-    <a href="https://extratorrent.cc/search/?search=${encodedTitle}&s_cat=&pp=&srt=seeds&order=desc" target="_blank">
-        <img src="${chrome.extension.getURL("img/extratorrent-favicon.png")}"/>
-    </a>
-    <a href="https://torrents.me/search/${encodedTitle}/" target="_blank">
+    <a href="https://torrents.io/search/${encodedTitle}/" target="_blank">
         <img src="${chrome.extension.getURL("img/torrents-favicon.png")}"/>
     </a>
     <a href="https://rarbg.to/torrents.php?search=${encodedTitle}/" target="_blank">
