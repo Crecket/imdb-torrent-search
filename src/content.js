@@ -206,7 +206,7 @@ const getImdbInfo = async () => {
     // do the api call
     return {
         Title: imdbTitleText,
-        Year: year,
+        Year: year.replace(/[^0-9]+/, "").trim(),
         Type: type,
     };
 };
