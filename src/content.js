@@ -44,8 +44,9 @@ const start = async () => {
     Logger.debug("Start ", imdbInfo);
 
     // prepare div
-    $("#imdb-torrent-search-inline")
-        .html("<hr/><div id=\"imdb-torrent-links\"></div><hr/><div id=\"imdb-torrent-magnets\">Loading...</div>");
+    $("#imdb-torrent-search-inline").html(
+        '<hr/><div id="imdb-torrent-links"></div><hr/><div id="imdb-torrent-magnets">Loading...</div>'
+    );
 
     // generate templates
     const links = displayLinks ? await Templates.links(imdbID, imdbInfo) : "";
@@ -64,7 +65,7 @@ const start = async () => {
             htmlOutput = await getSeries();
     }
 
-    Logger.debug("Start end", {html: htmlOutput});
+    Logger.debug("Start end", { html: htmlOutput });
 
     // update the magnets
     $("#imdb-torrent-magnets").html(htmlOutput);
@@ -85,8 +86,7 @@ const toggleOutput = () => {
 
     // start the extension content script
     start()
-        .then((_) => {
-        })
+        .then((_) => {})
         .catch(Logger.error);
 };
 
@@ -104,7 +104,7 @@ const getSeries = async () => {
     // require atleast one result
     if (!result || !result.torrents) return "No download results";
 
-    let jsonTorrents = result.torrents
+    let jsonTorrents = result.torrents;
 
     // loop through episodes and generated a sorted/formatted object
     jsonTorrents.map((torrent) => {
@@ -112,7 +112,7 @@ const getSeries = async () => {
         if (!showTorrents[torrent.season]) showTorrents[torrent.season] = {};
         // add episode to this season
         if (showTorrents[torrent.season][torrent.episode])
-            showTorrents[torrent.season][torrent.episode].torrents.push(torrent)
+            showTorrents[torrent.season][torrent.episode].torrents.push(torrent);
         else
             showTorrents[torrent.season][torrent.episode] = {
                 episode: torrent.episode,
@@ -140,7 +140,7 @@ const getMovie = async () => {
     // require atleast one result
     if (!result) return "No download results";
 
-    let jsonTorrents = result.data.movies[0].torrents
+    let jsonTorrents = result.data.movies[0].torrents;
 
     // check if we got enough results
     if (Object.keys(jsonTorrents).length > 0) {
@@ -176,7 +176,7 @@ const getMovie = async () => {
 const checkPPTApi = async (imdbID, type = "movie") => {
     // do the api call and return the result
     return new Promise(async (resolve, reject) => {
-        chrome.runtime.sendMessage({type: type, imdbID: imdbID}, (response) => {
+        chrome.runtime.sendMessage({ type: type, imdbID: imdbID }, (response) => {
             resolve(response.data);
         });
     }).catch(Logger.error);
@@ -188,9 +188,9 @@ const checkPPTApi = async (imdbID, type = "movie") => {
  */
 const getImdbInfo = async () => {
     // extract title
-    const imdbTitle = $(".ipc-page-section h1").text();
+    const imdbTitle = $(".titleBar .title_wrapper h1").text();
     // extract secondary text
-    const subheader = $(".ipc-inline-list li.ipc-inline-list__item")
+    const subheader = $(".ipc-inline-list li.ipc-inline-list__item");
     const typeHtml = subheader.first().text();
     // check if the secondary text contains "Series"
     const typeMatches = typeHtml.match(/(Series|Episode)/i);
@@ -199,9 +199,9 @@ const getImdbInfo = async () => {
     // remove year from title
     const imdbTitleText = imdbTitle.replace(/\([0-9]*\)/, "").trim();
 
-
     // Get year
-    const year = type === "series" ? subheader.first().next().find('span').text() : subheader.first().find('span').text();
+    const year =
+        type === "series" ? subheader.first().next().find("span").text() : subheader.first().find("span").text();
 
     // do the api call
     return {
@@ -212,10 +212,10 @@ const getImdbInfo = async () => {
 };
 
 // create image for click event and other interactions
-$(".ipc-page-section h1").append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
+$(".titleBar .title_wrapper h1").append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
 
 // append the inline block so we can modify it more easily
-$(".ipc-page-section").append(`<div id="imdb-torrent-search-inline"></div>`);
+$(".titleBar .title_wrapper").append(`<div id="imdb-torrent-search-inline"></div>`);
 
 // attach click listener
 $("#imdb-torrent-search-icon").on("click", () => {
