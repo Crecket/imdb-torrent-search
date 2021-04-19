@@ -53,15 +53,16 @@
             </div>
             <div class="card-content center-align">
                 <p class="left-align flow-text">
-                    The way this works is that the extension will replace ${name} with the correct movie name
-                    automatically.
+                    The way this works is that the extension will replace ${name} with the correct movie name,
+                    ${imdbID} with IMDB ID, and ${year} with movie year automatically.
                 </p>
                 <p class="left-align flow-text">
                     The easiest way to get this link for your site is to search for a movie and replace the movie name
                     in the url with ${name}. For example:
                 </p>
                 <blockquote class="left-align flow-text">
-                    <p>https://rarbg.to/torrents.php?search=${name}</p>
+                    <p>https://rarbg.to/torrents.php?search=${name}+${year}</p>
+                    <p>https://rarbg.to/torrents.php?search=${imdbID}+2160p</p>
                 </blockquote>
 
                 <form class="row" id="custom_torrent_form">
