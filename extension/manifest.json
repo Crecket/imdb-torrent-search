@@ -34,7 +34,8 @@
   },
   "permissions": [
     "storage",
-    "https://tv-v2.api-fetch.sh/*"
+    "https://yts.mx/*",
+    "https://eztv.re/*"
   ],
   "web_accessible_resources": [
     "img/logo-16x16.png",
