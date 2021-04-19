@@ -1,3 +1,4 @@
 extension/build/*
 releases/*
 !releases/.gitkeep
+node_modules
