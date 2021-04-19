@@ -43,6 +43,15 @@ const start = async () => {
 
     Logger.debug("Start ", imdbInfo);
 
+    // prepare div
+    $("#imdb-torrent-search-inline")
+        .html("<hr/><div id=\"imdb-torrent-links\"></div><hr/><div id=\"imdb-torrent-magnets\">Loading...</div>");
+
+    // generate templates
+    const links = displayLinks ? await Templates.links(imdbID, imdbInfo) : "";
+    // update the links
+    $("#imdb-torrent-links").html(links);
+
     // check which type of call we have to do
     let htmlOutput = "";
     switch (imdbInfo.Type) {
@@ -55,10 +64,10 @@ const start = async () => {
             htmlOutput = await getSeries();
     }
 
-    Logger.debug("Start end", { html: htmlOutput });
+    Logger.debug("Start end", {html: htmlOutput});
 
-    // update the inline result
-    await displayInline(imdbInfo, htmlOutput, isVisible);
+    // update the magnets
+    $("#imdb-torrent-magnets").html(htmlOutput);
 
     // startup was successful
     return true;
@@ -76,7 +85,8 @@ const toggleOutput = () => {
 
     // start the extension content script
     start()
-        .then((_) => {})
+        .then((_) => {
+        })
         .catch(Logger.error);
 };
 
@@ -92,19 +102,24 @@ const getSeries = async () => {
     Logger.debug("Show", result);
 
     // require atleast one result
-    if (!result) return "No download results";
+    if (!result || !result.torrents) return "No download results";
+
+    let jsonTorrents = result.torrents
 
     // loop through episodes and generated a sorted/formatted object
-    result.episodes.map((episode) => {
+    jsonTorrents.map((torrent) => {
         // if doesn't exist yet create empty object slot
-        if (!showTorrents[episode.season]) showTorrents[episode.season] = {};
+        if (!showTorrents[torrent.season]) showTorrents[torrent.season] = {};
         // add episode to this season
-        showTorrents[episode.season][episode.episode] = {
-            episode: episode.episode,
-            season: episode.season,
-            title: episode.title,
-            torrents: episode.torrents,
-        };
+        if (showTorrents[torrent.season][torrent.episode])
+            showTorrents[torrent.season][torrent.episode].torrents.push(torrent)
+        else
+            showTorrents[torrent.season][torrent.episode] = {
+                episode: torrent.episode,
+                season: torrent.season,
+                title: torrent.title,
+                torrents: [torrent],
+            };
     });
 
     Logger.debug("Show result", showTorrents);
@@ -125,26 +140,22 @@ const getMovie = async () => {
     // require atleast one result
     if (!result) return "No download results";
 
+    let jsonTorrents = result.data.movies[0].torrents
+
     // check if we got enough results
-    if (Object.keys(result.torrents).length > 0) {
-        // prefer en language but fallback to the first key in the list
-        const lang = result.torrents.en ? "en" : Object.keys(result.torrents).shift();
-
-        // get torrent list
-        const torrents = result.torrents[lang];
-
+    if (Object.keys(jsonTorrents).length > 0) {
         // loop through available torrents
-        Object.keys(torrents).map((quality) => {
+        Object.keys(jsonTorrents).map((quality) => {
             // get torrent info
-            const torrent = torrents[quality];
+            const torrent = jsonTorrents[quality];
 
             // create a list
             movieTorrents.push({
-                peers: torrent.peer,
-                seeds: torrent.seed,
-                quality: quality,
-                size: torrent.filesize,
-                size_bytes: torrent.size,
+                peers: torrent.peers,
+                seeds: torrent.seeds,
+                quality: torrent.quality,
+                size: torrent.size,
+                size_bytes: torrent.size_bytes,
                 magnet_url: torrent.url,
             });
         });
@@ -153,32 +164,6 @@ const getMovie = async () => {
     Logger.debug("Movie result", movieTorrents);
 
     return Templates.movieTable(movieTorrents);
-};
-
-/**
- * Displays the inline div based on lookup results
- *
- * @param imdbInfo
- * @param htmlOutput
- * @param isVisible
- * @returns {*|jQuery}
- */
-const displayInline = async (imdbInfo, htmlOutput, isVisible) => {
-    // if not visible, remove and don't do anything else
-    if (!isVisible) return $("#imdb-torrent-search-inline").html("");
-
-    // generate templates
-    const links = displayLinks ? await Templates.links(imdbInfo.Title) : "";
-
-    // render the results
-    $("#imdb-torrent-search-inline").html(
-        `
-        <hr/>
-        ${htmlOutput}
-        <hr/>
-        ${links}
-    `
-    );
 };
 
 /**
@@ -191,10 +176,10 @@ const displayInline = async (imdbInfo, htmlOutput, isVisible) => {
 const checkPPTApi = async (imdbID, type = "movie") => {
     // do the api call and return the result
     return new Promise(async (resolve, reject) => {
-        chrome.runtime.sendMessage({ type: type, imdbID: imdbID }, (response) => {
+        chrome.runtime.sendMessage({type: type, imdbID: imdbID}, (response) => {
             resolve(response.data);
         });
-    });
+    }).catch(Logger.error);
 };
 
 /**
@@ -203,27 +188,34 @@ const checkPPTApi = async (imdbID, type = "movie") => {
  */
 const getImdbInfo = async () => {
     // extract title
-    const imdbTitle = $(".title_block .title_bar_wrapper .title_wrapper h1").text();
+    const imdbTitle = $(".ipc-page-section h1").text();
     // extract secondary text
-    const typeHtml = $(".heroic-overview .title_block .title_bar_wrapper a:link").text();
+    const subheader = $(".ipc-inline-list li.ipc-inline-list__item")
+    const typeHtml = subheader.first().text();
     // check if the secondary text contains "Series"
-    const typeMatches = typeHtml.match(/(Series)/);
+    const typeMatches = typeHtml.match(/(Series|Episode)/i);
+    const type = typeMatches && typeMatches.length > 0 ? "series" : "movie";
 
     // remove year from title
     const imdbTitleText = imdbTitle.replace(/\([0-9]*\)/, "").trim();
 
+
+    // Get year
+    const year = type === "series" ? subheader.first().next().find('span').text() : subheader.first().find('span').text();
+
     // do the api call
     return {
         Title: imdbTitleText,
-        Type: typeMatches && typeMatches.length > 0 ? "series" : "movie",
+        Year: year,
+        Type: type,
     };
 };
 
 // create image for click event and other interactions
-$(".title_wrapper h1").append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
+$(".ipc-page-section h1").append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
 
 // append the inline block so we can modify it more easily
-$(".title_block").append(`<div id="imdb-torrent-search-inline"></div>`);
+$(".ipc-page-section").append(`<div id="imdb-torrent-search-inline"></div>`);
 
 // attach click listener
 $("#imdb-torrent-search-icon").on("click", () => {
