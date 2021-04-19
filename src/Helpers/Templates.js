@@ -85,15 +85,17 @@ const createShowTable = (showTorrents) => {
 
             // loop through torrents and return a html string
             let qualityList = [];
-            Object.keys(episodeInfo.torrents).map((quality) => {
-                // get info for this quality type
-                const qualityInfo = episodeInfo.torrents[quality];
+            Object.keys(episodeInfo.torrents).map((i) => {
+                const torrent = episodeInfo.torrents[i];
 
-                // ignore quality 0
-                if (quality === "0") return;
+                // get info for this quality type
+                let match = /(240p|360p|480p|720p|1080p|1440p|2160p|4k|8k)/ig.exec(torrent.title);
+                if(!match || match.length < 2) return;
+                let quality = match[1]
+
                 qualityList.push(
                     `
-                    <a href="${qualityInfo.url}">
+                    <a href="${torrent.magnet_url}">
                         <img id="imdb-torrent-search-icon" src="${magnetImageUrl}"> ${quality}
                     </a>
                 `
@@ -120,13 +122,14 @@ const createShowTable = (showTorrents) => {
 
 /**
  *
- * @param title
+ * @param imdbID
+ * @param imdbInfo
  * @returns {string}
  */
-const createLinks = async (title) => {
+const createLinks = async (imdbID, imdbInfo) => {
     return new Promise((resolve, reject) => {
         // encode the title without non alphanumeric
-        const encodedTitle = encodeURIComponent(title.replace(/[^0-9a-z ]/gi, "").trim());
+        const encodedTitle = encodeURIComponent(imdbInfo.Title.replace(/[^0-9a-z ]/gi, "").trim());
 
         // fetch the latest customUrls
         chrome.storage.local.get(["customUrls"], (result) => {
@@ -137,7 +140,9 @@ const createLinks = async (title) => {
             // generate a list of urls and icons for the template
             let customUrlsResult = "";
             customUrls.map((customUrl, key) => {
-                const urlTemplate = customUrl.urlTemplate.replace(/\$\{name\}/, encodedTitle);
+                const urlTemplate = customUrl.urlTemplate.replace(/\$\{name\}/, encodedTitle)
+                    .replace(/\$\{year\}/, imdbInfo.Year)
+                    .replace(/\$\{imdbID\}/, imdbID);
 
                 customUrlsResult += `
 <a href="${urlTemplate}" target="_blank">
@@ -148,17 +153,20 @@ const createLinks = async (title) => {
             // return the list of links to search pages for
             resolve(`<div class="imdb-torrent-search-links">
     <b>Search links:<p/>
-    <a href="https://thepiratebay.org/search/${encodedTitle}/0/99/0" target="_blank">
+    <a href="https://thepiratebay.org/search/${imdbID}/0/99/0" target="_blank">
         <img src="${chrome.extension.getURL("img/tpb-favicon.png")}"/>
     </a>
-    <a href="https://1337x.to/search/${encodedTitle}/1/" target="_blank">
+    <a href="https://1337x.to/search/${encodedTitle}+${imdbInfo.Year}/1/" target="_blank">
         <img src="${chrome.extension.getURL("img/1337x-favicon.png")}"/>
     </a>
-    <a href="https://torrents.io/search/${encodedTitle}/" target="_blank">
-        <img src="${chrome.extension.getURL("img/torrents-favicon.png")}"/>
-    </a>
-    <a href="https://rarbg.to/torrents.php?search=${encodedTitle}/" target="_blank">
+    <a href="https://rarbg.to/torrents.php?search=${imdbID}" target="_blank">
         <img src="${chrome.extension.getURL("img/rargb-favicon.png")}"/>
+    </a>
+    <a href="https://ibit.to/torrent-search/${imdbID}/" target="_blank">
+        <img src="${chrome.extension.getURL("img/ibit-favicon.png")}"/>
+    </a>
+    <a href="https://www.aiosearch.com/search/4/Torrents/${encodedTitle}%20${imdbInfo.Year}/" target="_blank">
+        <img src="${chrome.extension.getURL("img/aiosearch-favicon.png")}"/>
     </a>
     ${customUrlsResult}
 </div>`);
