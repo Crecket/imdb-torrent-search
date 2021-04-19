@@ -6,9 +6,7 @@ require("./scss/content.scss");
 // libraries
 require("babel-core/register");
 require("babel-polyfill");
-const Url = require("url");
 const $ = require("jquery");
-const axios = require("axios");
 
 // extension files
 const Logger = require("./Helpers/Logger");
@@ -82,12 +80,16 @@ const toggleOutput = () => {
     isVisible = !isVisible;
 
     // show loader if we're showing the inline result
-    if (isVisible) $("#imdb-torrent-search-inline").html("<p>Loading</p>");
+    if (isVisible) {
+        $("#imdb-torrent-search-inline").html("<p>Loading</p>");
 
-    // start the extension content script
-    start()
-        .then((_) => {})
-        .catch(Logger.error);
+        // start the extension content script
+        start()
+            .then((_) => {})
+            .catch(Logger.error);
+    } else {
+        $("#imdb-torrent-search-inline").html("");
+    }
 };
 
 /**
@@ -102,12 +104,10 @@ const getSeries = async () => {
     Logger.debug("Show", result);
 
     // require atleast one result
-    if (!result || !result.torrents) return "No download results";
-
-    let jsonTorrents = result.torrents;
+    if (!result) return "No download results";
 
     // loop through episodes and generated a sorted/formatted object
-    jsonTorrents.map((torrent) => {
+    result.map((torrent) => {
         // if doesn't exist yet create empty object slot
         if (!showTorrents[torrent.season]) showTorrents[torrent.season] = {};
         // add episode to this season
@@ -190,7 +190,7 @@ const getImdbInfo = async () => {
     // extract title
     const imdbTitle = $(".titleBar .title_wrapper h1").text();
     // extract secondary text
-    const subheader = $(".ipc-inline-list li.ipc-inline-list__item");
+    const subheader = $(".titleBar .title_wrapper .subtext");
     const typeHtml = subheader.first().text();
     // check if the secondary text contains "Series"
     const typeMatches = typeHtml.match(/(Series|Episode)/i);
