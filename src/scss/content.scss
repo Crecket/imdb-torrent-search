@@ -14,6 +14,7 @@
     }
 
     .imdb-torrent-search-table {
+        width: 100%;
         margin-left: 10px;
 
         .download-icon {
@@ -22,6 +23,9 @@
 
         tr {
             text-align: left;
+        }
+        a {
+          color: #00b0ff;
         }
     }
 }
