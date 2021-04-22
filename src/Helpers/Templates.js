@@ -89,9 +89,9 @@ const createShowTable = (showTorrents) => {
                 const torrent = episodeInfo.torrents[i];
 
                 // get info for this quality type
-                let match = /(240p|360p|480p|720p|1080p|1440p|2160p|4k|8k)/ig.exec(torrent.title);
-                if(!match || match.length < 2) return;
-                let quality = match[1]
+                let match = /(240p|360p|480p|720p|1080p|1440p|2160p|4k|8k)/gi.exec(torrent.title);
+                if (!match || match.length < 2) return;
+                let quality = match[1];
 
                 qualityList.push(
                     `
@@ -140,7 +140,8 @@ const createLinks = async (imdbID, imdbInfo) => {
             // generate a list of urls and icons for the template
             let customUrlsResult = "";
             customUrls.map((customUrl, key) => {
-                const urlTemplate = customUrl.urlTemplate.replace(/\$\{name\}/, encodedTitle)
+                const urlTemplate = customUrl.urlTemplate
+                    .replace(/\$\{name\}/, encodedTitle)
                     .replace(/\$\{year\}/, imdbInfo.Year)
                     .replace(/\$\{imdbID\}/, imdbID);
 

@@ -44,6 +44,8 @@
     "img/extratorrent-favicon.png",
     "img/torrents-favicon.png",
     "img/rargb-favicon.png",
+    "img/aiosearch-favicon.png",
+    "img/ibit-favicon.png",
     "img/tpb-favicon.png"
   ],
   "content_security_policy": "script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com 'unsafe-eval'; object-src 'self' https://fonts.googleapis.com"
