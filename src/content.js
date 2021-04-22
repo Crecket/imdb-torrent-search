@@ -188,9 +188,9 @@ const checkPPTApi = async (imdbID, type = "movie") => {
  */
 const getImdbInfo = async () => {
     // extract title
-    const imdbTitle = $(".ipc-page-section h1").text();
+    const imdbTitle = $(".titleBar .title_wrapper h1, .ipc-page-section h1").text();
     // extract secondary text
-    const subheader = $(".ipc-inline-list li.ipc-inline-list__item");
+    const subheader = $(".titleBar .title_wrapper .subtext, .ipc-inline-list li.ipc-inline-list__item");
     const typeHtml = subheader.first().text();
     // check if the secondary text contains "Series"
     const typeMatches = typeHtml.match(/(Series|Episode)/i);
@@ -212,10 +212,10 @@ const getImdbInfo = async () => {
 };
 
 // create image for click event and other interactions
-$(".ipc-page-section h1").append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
+$("titleBar .title_wrapper h1, .ipc-page-section h1").append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
 
 // append the inline block so we can modify it more easily
-$(".ipc-page-section").append(`<div id="imdb-torrent-search-inline"></div>`);
+$(".titleBar .title_wrapper, .ipc-page-section").append(`<div id="imdb-torrent-search-inline"></div>`);
 
 // attach click listener
 $("#imdb-torrent-search-icon").on("click", () => {
