@@ -61,7 +61,9 @@ $(document.body).on("click", ".remove-custom-link", (event) => {
         let customUrls = result.customUrls !== undefined ? result.customUrls : [];
 
         const urlKey = $(event.target).data("url-key");
-        if (!urlKey) return;
+        if (!urlKey && urlKey !== 0) return;
+
+
 
         // delete customUrls[urlKey];
         customUrls.splice(parseInt(urlKey), 1);
@@ -85,7 +87,7 @@ $("#custom_torrent_form").on("submit", (event) => {
     // fallback to google's favicon lookup
     const iconUrl = iconInput.length <= 0 ? `https://www.google.com/s2/favicons?domain=${urlTemplate}` : iconInput;
 
-    const templateTest = urlTemplate.replace(/\$\{name\}/, "abcd :(");
+    const templateTest = urlTemplate.replace(/\$\{(name|year|imdbID)\}/, "abcd :(");
     if (templateTest === urlTemplate) {
         // nothing was replaced, the template seems to be broken
         Materialize.toast("It looks like your template isn't correct!", 3000, "red white-text");
