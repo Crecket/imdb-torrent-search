@@ -212,7 +212,9 @@ const getImdbInfo = async () => {
 };
 
 // create image for click event and other interactions
-$("titleBar .title_wrapper h1, .ipc-page-section h1").append(`<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`);
+$(".titleBar .title_wrapper h1, .ipc-page-section h1").append(
+    `<img id="imdb-torrent-search-icon" src="${logoImageUrl}">`
+);
 
 // append the inline block so we can modify it more easily
 $(".titleBar .title_wrapper, .ipc-page-section").append(`<div id="imdb-torrent-search-inline"></div>`);

@@ -63,8 +63,6 @@ $(document.body).on("click", ".remove-custom-link", (event) => {
         const urlKey = $(event.target).data("url-key");
         if (!urlKey && urlKey !== 0) return;
 
-
-
         // delete customUrls[urlKey];
         customUrls.splice(parseInt(urlKey), 1);
 
