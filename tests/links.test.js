@@ -71,3 +71,20 @@ describe("buildSearchLinks", () => {
         expect(buildSearchLinks(info)).toHaveLength(SEARCH_SITES.length);
     });
 });
+
+describe("catalogue coverage", () => {
+    test("includes a meta-search that spans trackers we do not list individually", () => {
+        const knaben = SEARCH_SITES.find((site) => site.id === "knaben");
+        expect(knaben).toBeDefined();
+        expect(knaben.build({ encodedTitle: "The%20Matrix", year: "1999", imdbID: "tt1" })).toBe(
+            "https://knaben.org/search/The%20Matrix%201999/0/1/seeders",
+        );
+    });
+
+    test("every site's built url parses and is safe", () => {
+        for (const site of SEARCH_SITES) {
+            const url = site.build({ encodedTitle: "x", year: "1999", imdbID: "tt1" });
+            expect(() => new URL(url)).not.toThrow();
+        }
+    });
+});

@@ -106,6 +106,119 @@ $peers: #f87171;
         }
     }
 
+    // --- status strip -------------------------------------------------------
+    .its-status {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: $panel-muted;
+
+        &:empty {
+            display: none;
+        }
+
+        &[data-tone="error"] {
+            color: $peers;
+        }
+
+        // Spinner only while revalidating, so a settled panel is visually quiet.
+        &[data-tone="updating"]::before {
+            content: "";
+            width: 11px;
+            height: 11px;
+            border: 2px solid rgba(245, 197, 24, 0.28);
+            border-top-color: $accent;
+            border-radius: 50%;
+            animation: its-spin 0.7s linear infinite;
+            flex: none;
+        }
+
+        &[data-tone="fresh"]::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: $seeds;
+            flex: none;
+        }
+    }
+
+    // --- season picker ------------------------------------------------------
+    .its-season-picker {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        padding: 9px 11px;
+        border: 1px solid $panel-border;
+        border-radius: 7px;
+        background: $panel-chip;
+    }
+
+    .its-season-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: $panel-muted;
+    }
+
+    .its-select-wrap {
+        position: relative;
+        display: inline-flex;
+
+        // Custom chevron; the native one is unstyleable and clashes with the panel.
+        &::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            right: 11px;
+            width: 6px;
+            height: 6px;
+            border-right: 2px solid $panel-muted;
+            border-bottom: 2px solid $panel-muted;
+            transform: translateY(-70%) rotate(45deg);
+            pointer-events: none;
+        }
+    }
+
+    .its-season-select {
+        appearance: none;
+        min-width: 170px;
+        padding: 6px 30px 6px 11px;
+        border: 1px solid $panel-border;
+        border-radius: 6px;
+        background: $panel-bg;
+        color: $panel-fg;
+        font: inherit;
+        font-size: 13px;
+        line-height: 1.3;
+        cursor: pointer;
+
+        &:hover {
+            border-color: $accent;
+        }
+
+        &:focus-visible {
+            outline: 2px solid rgba(245, 197, 24, 0.45);
+            outline-offset: 1px;
+        }
+
+        option {
+            background: $panel-bg;
+            color: $panel-fg;
+        }
+    }
+
+    .its-total {
+        margin-left: auto;
+        font-size: 12px;
+        color: $panel-muted;
+    }
+
     .its-table {
         width: 100%;
         border-collapse: collapse;
@@ -147,17 +260,58 @@ $peers: #f87171;
     }
 
     .its-magnet {
-        width: 14px;
-        height: 14px;
+        width: 13px;
+        height: 13px;
         vertical-align: middle;
+        flex: none;
     }
 
-    .its-qualities a {
+    // Magnet links read as buttons rather than a bare 13px icon, which was
+    // effectively invisible against the panel.
+    .its-button {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        margin-right: 10px;
+        gap: 6px;
+        padding: 4px 10px;
+        border: 1px solid $panel-border;
+        border-radius: 6px;
+        background: $panel-chip;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.4;
         white-space: nowrap;
+
+        &:hover {
+            border-color: $accent;
+            background: rgba(245, 197, 24, 0.16);
+            text-decoration: none;
+        }
+
+        &:focus-visible {
+            outline: 2px solid rgba(245, 197, 24, 0.45);
+            outline-offset: 1px;
+        }
+    }
+
+    .its-movies {
+        .its-quality {
+            font-weight: 600;
+            color: $panel-fg;
+        }
+
+        .its-source {
+            color: $panel-muted;
+        }
+
+        .its-download {
+            text-align: right;
+        }
+    }
+
+    .its-qualities {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
     }
 
     .its-seeds {
@@ -167,5 +321,11 @@ $peers: #f87171;
 
     .its-peers {
         color: $peers;
+    }
+}
+
+@keyframes its-spin {
+    to {
+        transform: rotate(360deg);
     }
 }

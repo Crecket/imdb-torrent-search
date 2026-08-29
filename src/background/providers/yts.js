@@ -1,4 +1,5 @@
 import { fetchJson } from "../http.js";
+import { toMagnet } from "../magnet.js";
 
 /**
  * Tried in order until one answers.
@@ -17,25 +18,7 @@ export const YTS_BASES = ["https://movies-api.accel.li/api/v2", "https://yts.mx/
  */
 const BASE_TIMEOUT_MS = 25000;
 
-const TRACKERS = [
-    "udp://tracker.opentrackr.org:1337/announce",
-    "udp://open.demonii.com:1337/announce",
-    "udp://tracker.openbittorrent.com:6969/announce",
-    "udp://exodus.desync.com:6969/announce",
-];
-
 const QUALITY_RANK = { "2160p": 5, "1440p": 4, "1080p": 3, "720p": 2, "480p": 1 };
-
-/**
- * The API hands back a .torrent download URL, which a browser cannot act on
- * without a torrent client hook. The info hash is also present, so we build a
- * magnet URI from it instead.
- */
-function toMagnet(hash, title) {
-    const name = encodeURIComponent(title ?? "");
-    const trackers = TRACKERS.map((tracker) => `tr=${encodeURIComponent(tracker)}`).join("&");
-    return `magnet:?xt=urn:btih:${hash}&dn=${name}&${trackers}`;
-}
 
 function normalise(torrent, title) {
     return {
@@ -55,22 +38,28 @@ function normalise(torrent, title) {
  * when every base is unreachable.
  */
 export async function fetchMovieTorrents(imdbID, { fetchJsonImpl = fetchJson, bases = YTS_BASES } = {}) {
-    let lastError;
-
-    for (const base of bases) {
+    // Bases are raced rather than tried in order. Sequentially, latency is the
+    // sum of every dead host's timeout plus the surviving one's response time,
+    // and the ordering has to be right for the user's network. Racing makes it
+    // the fastest single response and makes the order irrelevant.
+    const attempts = bases.map(async (base) => {
         const url = `${base}/list_movies.json?query_term=${encodeURIComponent(imdbID)}`;
-        try {
-            const payload = await fetchJsonImpl(url, { retries: 0, timeoutMs: BASE_TIMEOUT_MS });
-            const movie = payload?.data?.movies?.[0];
-            if (!movie || !Array.isArray(movie.torrents)) return [];
+        const payload = await fetchJsonImpl(url, { retries: 0, timeoutMs: BASE_TIMEOUT_MS });
 
-            return movie.torrents
-                .map((torrent) => normalise(torrent, movie.title))
-                .sort((a, b) => (QUALITY_RANK[b.quality] ?? 0) - (QUALITY_RANK[a.quality] ?? 0));
-        } catch (error) {
-            lastError = error;
-        }
+        const movie = payload?.data?.movies?.[0];
+        if (!movie || !Array.isArray(movie.torrents)) return [];
+
+        return movie.torrents
+            .map((torrent) => normalise(torrent, movie.title))
+            .filter((torrent) => torrent.magnet) // no usable info hash -> unusable entry
+            .sort((a, b) => (QUALITY_RANK[b.quality] ?? 0) - (QUALITY_RANK[a.quality] ?? 0));
+    });
+
+    try {
+        return await Promise.any(attempts);
+    } catch (error) {
+        // Promise.any rejects with an AggregateError only when every base failed.
+        const reasons = error?.errors?.map((e) => e.message).join("; ") || "no API base reachable";
+        throw new Error(`YTS lookup failed for ${imdbID}: ${reasons}`);
     }
-
-    throw new Error(`YTS lookup failed for ${imdbID}: ${lastError?.message ?? "no API base reachable"}`);
 }

@@ -31,6 +31,12 @@ export const SEARCH_SITES = [
         build: ({ imdbID }) => `https://eztvx.to/search/${imdbID}`,
     },
     {
+        id: "knaben",
+        label: "Knaben",
+        // Meta-search across many trackers, so it covers sites we do not list.
+        build: ({ encodedTitle, year }) => `https://knaben.org/search/${encodedTitle}%20${year}/0/1/seeders`,
+    },
+    {
         id: "torrentgalaxy",
         label: "TorrentGalaxy",
         build: ({ encodedTitle, year }) => `https://torrentgalaxy.one/search?q=${encodedTitle}+${year}`,

@@ -13,6 +13,23 @@ export function isSafeUrl(value) {
     }
 }
 
+/**
+ * Schemes allowed for image sources. Extension-bundled icons arrive as
+ * chrome-extension:// URLs from chrome.runtime.getURL, which the link
+ * allow-list above deliberately rejects — an image src is a strictly narrower
+ * capability than an href, so it gets its own list rather than widening that one.
+ */
+const SAFE_IMAGE_PROTOCOLS = new Set(["http:", "https:", "chrome-extension:", "moz-extension:"]);
+
+export function isSafeImageUrl(value) {
+    if (typeof value !== "string" || value.trim() === "") return false;
+    try {
+        return SAFE_IMAGE_PROTOCOLS.has(new URL(value.trim()).protocol);
+    } catch {
+        return false;
+    }
+}
+
 const PLACEHOLDER = /\$\{(name|year|imdbID)\}/g;
 
 /**

@@ -50,7 +50,8 @@ it runs under jsdom without a browser.
 
 | Service | Endpoint | Notes |
 |---|---|---|
-| YTS | `yts.mx`, falling back to `movies-api.accel.li` | Movies. Bases are tried in order |
+| Torrentio | `torrentio.strem.fun` | Movies, primary. Aggregates many trackers; ~100ms |
+| YTS | `movies-api.accel.li`, `yts.mx` | Movies, fallback only. Raced; often slow or timing out |
 | EZTV | `eztvx.to` | Series. `eztv.re` 301s here, so both hosts are permitted |
 | IMDb | page scrape | JSON-LD first, `data-testid` selectors as fallback |
 
@@ -58,15 +59,27 @@ it runs under jsdom without a browser.
 
 Two things could not be verified in CI and are worth one manual check:
 
-1. **YTS base URL.** The host has moved repeatedly. Open a movie title and
-   confirm the table populates; if not, check the service worker console and
-   adjust `YTS_BASES` in `src/background/providers/yts.js`.
+1. **Movie sources.** Run `checkHosts()` in the service worker console.
+   Torrentio should answer well under a second; the YTS mirrors are slow and
+   often unreachable, which is why they are only a fallback.
 2. **IMDb markup.** If a title renders with an empty name or year, IMDb has
    changed its layout again — update the selectors in `src/content/imdb-page.js`
    and add a fixture to `tests/fixtures/`.
 
-`scripts/verify.mjs` checks both from the command line:
+`npm run verify` checks the APIs from the command line. Anything needing a real
+browser is exposed by the service worker itself - nothing to copy-paste. Open
+`chrome://extensions` -> **service worker**:
 
-```bash
-node scripts/verify.mjs
+```js
+checkHosts()   // times every torrent API on your network
+showCache()    // what is cached, and how old
+clearCache()   // drop cached lookups, keeping settings
 ```
+
+## Caching
+
+Lookups are cached for an hour in `chrome.storage.local`, then served
+stale-while-revalidate: an expired entry is shown immediately with an
+"Updating..." indicator while it refreshes behind the results. A failed refresh
+keeps the stale data on screen rather than replacing it with an error. At most
+40 entries are kept, oldest evicted first.
