@@ -43,7 +43,11 @@ export const SEARCH_SITES = [
  * rather than rendered.
  */
 export function buildSearchLinks(info, customUrls = []) {
-    const encodedTitle = encodeURIComponent(String(info?.title ?? "").replace(/[^0-9a-z ]/gi, "").trim());
+    const encodedTitle = encodeURIComponent(
+        String(info?.title ?? "")
+            .replace(/[^0-9a-z ]/gi, "")
+            .trim(),
+    );
     const vars = { name: encodedTitle, year: info?.year ?? "", imdbID: info?.imdbID ?? "" };
 
     const links = [];

@@ -36,11 +36,7 @@ describe("groupEpisodes", () => {
     });
 
     test("sorts seasons numerically, not lexicographically", () => {
-        const seasons = groupEpisodes([
-            episode({ season: 10 }),
-            episode({ season: 2 }),
-            episode({ season: 1 }),
-        ]);
+        const seasons = groupEpisodes([episode({ season: 10 }), episode({ season: 2 }), episode({ season: 1 })]);
         expect(seasons.map((s) => s.season)).toEqual([1, 2, 10]);
     });
 
@@ -63,7 +59,7 @@ describe("renderMovieTable", () => {
     test("renders a row per torrent", () => {
         const table = renderMovieTable(
             [{ quality: "1080p", size: "2 GB", seeds: 10, peers: 2, magnet: "magnet:?xt=urn:btih:a" }],
-            ICON
+            ICON,
         );
         expect(table.querySelectorAll("tbody tr")).toHaveLength(1);
         expect(table.textContent).toContain("1080p");
@@ -86,10 +82,7 @@ describe("renderSeriesTable", () => {
     });
 
     test("an episode title containing markup is inert", () => {
-        const table = renderSeriesTable(
-            [episode({ title: '<img src=x onerror="globalThis.PWNED=1">' })],
-            ICON
-        );
+        const table = renderSeriesTable([episode({ title: '<img src=x onerror="globalThis.PWNED=1">' })], ICON);
         document.body.append(table);
         expect(table.querySelectorAll("img[onerror]")).toHaveLength(0);
         expect(globalThis.PWNED).toBeUndefined();
@@ -117,9 +110,7 @@ describe("renderLinks", () => {
     });
 
     test("a malicious icon url is dropped without breaking the link", () => {
-        const el = renderLinks([
-            { label: "x", url: "https://ok.example", iconUrl: 'x" onerror="globalThis.PWNED=1' },
-        ]);
+        const el = renderLinks([{ label: "x", url: "https://ok.example", iconUrl: 'x" onerror="globalThis.PWNED=1' }]);
         document.body.append(el);
         expect(el.querySelectorAll("img[onerror]")).toHaveLength(0);
         expect(globalThis.PWNED).toBeUndefined();
@@ -127,7 +118,7 @@ describe("renderLinks", () => {
     });
 
     test("a label containing markup is inert", () => {
-        const el = renderLinks([{ label: '<script>globalThis.PWNED=1</script>', url: "https://ok.example" }]);
+        const el = renderLinks([{ label: "<script>globalThis.PWNED=1</script>", url: "https://ok.example" }]);
         document.body.append(el);
         expect(el.querySelectorAll("script")).toHaveLength(0);
         expect(globalThis.PWNED).toBeUndefined();

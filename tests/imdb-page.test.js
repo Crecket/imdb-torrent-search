@@ -19,7 +19,7 @@ describe("readImdbId", () => {
         "returns null for %s instead of throwing",
         (pathname) => {
             expect(readImdbId(pathname)).toBeNull();
-        }
+        },
     );
 
     test("returns null for a non-string input", () => {
@@ -70,7 +70,7 @@ describe("readPageInfo", () => {
     test("strips a trailing year from a DOM-derived title", () => {
         const doc = new DOMParser().parseFromString(
             '<h1 data-testid="hero__pageTitle">Some Film (2021)</h1>',
-            "text/html"
+            "text/html",
         );
         expect(readPageInfo(doc).title).toBe("Some Film");
     });

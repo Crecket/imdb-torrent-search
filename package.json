@@ -12,13 +12,15 @@
         "dev": "node scripts/build.mjs --watch --dev",
         "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
         "format": "prettier --tab-width 4 --print-width 120 --write \"{src,scripts,tests}/**/*.{js,mjs,scss}\"",
-        "release": "npm run build && node scripts/release.mjs"
+        "release": "npm run build && node scripts/release.mjs",
+        "verify": "node scripts/verify.mjs"
     },
     "devDependencies": {
         "archiver": "^7.0.1",
         "esbuild": "^0.25.0",
         "jest": "^29.7.0",
         "jest-environment-jsdom": "^29.7.0",
+        "jsdom": "^25.0.1",
         "prettier": "^3.4.2",
         "sass": "^1.83.0"
     },

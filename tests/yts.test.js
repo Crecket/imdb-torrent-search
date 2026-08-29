@@ -22,7 +22,7 @@ test("normalises a torrent list", async () => {
                 size: "2.1 GB",
                 size_bytes: 2254857830,
             },
-        ])
+        ]),
     );
 
     const result = await fetchMovieTorrents("tt0133093", { fetchJsonImpl });
@@ -42,7 +42,7 @@ test("normalises a torrent list", async () => {
 
 test("builds a magnet from the hash rather than using the .torrent url", async () => {
     const fetchJsonImpl = jest.fn(async () =>
-        movieResponse([{ url: "https://yts.mx/torrent/download/DEF", hash: "DEF", quality: "720p" }])
+        movieResponse([{ url: "https://yts.mx/torrent/download/DEF", hash: "DEF", quality: "720p" }]),
     );
     const [torrent] = await fetchMovieTorrents("tt0133093", { fetchJsonImpl });
     expect(torrent.magnet.startsWith("magnet:?xt=urn:btih:DEF")).toBe(true);
@@ -55,7 +55,7 @@ test("sorts by quality descending", async () => {
             { hash: "a", quality: "720p" },
             { hash: "b", quality: "2160p" },
             { hash: "c", quality: "1080p" },
-        ])
+        ]),
     );
     const result = await fetchMovieTorrents("tt0133093", { fetchJsonImpl });
     expect(result.map((t) => t.quality)).toEqual(["2160p", "1080p", "720p"]);

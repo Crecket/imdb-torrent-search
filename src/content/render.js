@@ -57,7 +57,7 @@ export function groupEpisodes(torrents) {
                 .map((entry) => ({
                     ...entry,
                     torrents: entry.torrents.sort(
-                        (a, b) => (QUALITY_RANK[b.quality] ?? -1) - (QUALITY_RANK[a.quality] ?? -1)
+                        (a, b) => (QUALITY_RANK[b.quality] ?? -1) - (QUALITY_RANK[a.quality] ?? -1),
                     ),
                 })),
         }));

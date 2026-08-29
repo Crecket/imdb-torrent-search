@@ -46,7 +46,7 @@ async function loadResults(imdbID) {
             buildSearchLinks(info, settings.customUrls).map((link) => ({
                 ...link,
                 iconUrl: link.iconUrl ?? (link.icon ? chrome.runtime.getURL(link.icon) : undefined),
-            }))
+            })),
         );
         setPanel(links, renderMessage("Loading torrents…"));
     } else {
@@ -58,9 +58,10 @@ async function loadResults(imdbID) {
     let table;
     try {
         const torrents = await sendMessage({ type, imdbID });
-        table = type === MESSAGE_TYPES.SERIES
-            ? renderSeriesTable(torrents, { magnetIcon })
-            : renderMovieTable(torrents, { magnetIcon });
+        table =
+            type === MESSAGE_TYPES.SERIES
+                ? renderSeriesTable(torrents, { magnetIcon })
+                : renderMovieTable(torrents, { magnetIcon });
     } catch (error) {
         // The MV2 version swallowed this and left "Loading..." on screen forever.
         logger.error(error);

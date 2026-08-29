@@ -1,12 +1,28 @@
-$accent: #f5c518;
-$bg: #ffffff;
-$fg: #16181c;
-$muted: #5c6470;
-$border: #dfe3e8;
-$surface: #f7f8fa;
+// Palette lives in custom properties so the dark override swaps values rather
+// than re-declaring rules. A bare `color-scheme: dark` without a matching
+// palette gives dark form controls on a white page.
+:root {
+    --bg: #ffffff;
+    --fg: #16181c;
+    --muted: #5c6470;
+    --border: #dfe3e8;
+    --surface: #f7f8fa;
+    --input-bg: #ffffff;
+    --accent: #f5c518;
+    --accent-fg: #16181c;
+    --code-bg: rgba(127, 127, 127, 0.18);
+    color-scheme: light;
+}
 
 @media (prefers-color-scheme: dark) {
     :root {
+        --bg: #17181b;
+        --fg: #e8e8ea;
+        --muted: #a5a8ad;
+        --border: #34363b;
+        --surface: #1f2024;
+        --input-bg: #17181b;
+        --code-bg: rgba(255, 255, 255, 0.12);
         color-scheme: dark;
     }
 }
@@ -19,9 +35,14 @@ body {
     width: 380px;
     margin: 0;
     padding: 12px;
-    background: $bg;
-    color: $fg;
-    font: 13px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    font:
+        13px/1.5 system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
 }
 
 .app-header {
@@ -40,9 +61,9 @@ body {
 .card {
     margin-bottom: 12px;
     padding: 12px;
-    border: 1px solid $border;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background: $surface;
+    background: var(--surface);
 
     h2 {
         margin: 0 0 8px;
@@ -52,7 +73,7 @@ body {
     h3 {
         margin: 16px 0 6px;
         font-size: 13px;
-        color: $muted;
+        color: var(--muted);
     }
 }
 
@@ -66,7 +87,7 @@ body {
     input {
         width: 16px;
         height: 16px;
-        accent-color: $accent;
+        accent-color: var(--accent);
         cursor: pointer;
     }
 }
@@ -75,19 +96,19 @@ body {
     display: block;
     width: 100%;
     margin-top: 10px;
-    border: 1px solid $border;
+    border: 1px solid var(--border);
     border-radius: 6px;
 }
 
 .help {
     margin: 0 0 8px;
-    color: $muted;
+    color: var(--muted);
 }
 
 code {
     padding: 1px 4px;
     border-radius: 3px;
-    background: rgba(127, 127, 127, 0.18);
+    background: var(--code-bg);
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 12px;
 }
@@ -97,10 +118,10 @@ code {
     padding: 8px;
     overflow-x: auto;
     border-radius: 6px;
-    background: rgba(127, 127, 127, 0.12);
+    background: var(--code-bg);
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 11px;
-    color: $muted;
+    color: var(--muted);
 }
 
 .field {
@@ -114,7 +135,7 @@ code {
     }
 
     em {
-        color: $muted;
+        color: var(--muted);
         font-style: normal;
         font-weight: 400;
     }
@@ -122,14 +143,14 @@ code {
     input {
         width: 100%;
         padding: 7px 9px;
-        border: 1px solid $border;
+        border: 1px solid var(--border);
         border-radius: 6px;
-        background: $bg;
+        background: var(--input-bg);
         color: inherit;
         font: inherit;
 
         &:focus {
-            border-color: $accent;
+            border-color: var(--accent);
             outline: 2px solid rgba(245, 197, 24, 0.35);
         }
     }
@@ -139,8 +160,8 @@ button.primary {
     padding: 7px 14px;
     border: 0;
     border-radius: 6px;
-    background: $accent;
-    color: #16181c;
+    background: var(--accent);
+    color: var(--accent-fg);
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -160,7 +181,7 @@ button.primary {
         align-items: center;
         gap: 8px;
         padding: 7px 0;
-        border-bottom: 1px solid $border;
+        border-bottom: 1px solid var(--border);
 
         &:last-child {
             border-bottom: 0;
@@ -175,21 +196,21 @@ button.primary {
     }
 
     .empty {
-        color: $muted;
+        color: var(--muted);
     }
 
     button.remove {
         padding: 3px 9px;
-        border: 1px solid $border;
+        border: 1px solid var(--border);
         border-radius: 999px;
         background: transparent;
-        color: #a40e26;
+        color: #e5534b;
         font: inherit;
         font-size: 11px;
         cursor: pointer;
 
         &:hover {
-            border-color: #a40e26;
+            border-color: #e5534b;
         }
     }
 }

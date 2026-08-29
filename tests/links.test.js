@@ -19,7 +19,7 @@ describe("SEARCH_SITES", () => {
     test("uses the current piratebay search path", () => {
         const tpb = SEARCH_SITES.find((site) => site.id === "tpb");
         expect(tpb.build({ encodedTitle: "The%20Matrix", year: "1999", imdbID: "tt0133093" })).toBe(
-            "https://thepiratebay.org/search.php?q=The%20Matrix%201999"
+            "https://thepiratebay.org/search.php?q=The%20Matrix%201999",
         );
     });
 
@@ -58,9 +58,7 @@ describe("buildSearchLinks", () => {
     });
 
     test("excludes a custom entry whose icon is unsafe but keeps the link", () => {
-        const links = buildSearchLinks(info, [
-            { urlTemplate: "https://x.to/${name}", iconUrl: "javascript:alert(1)" },
-        ]);
+        const links = buildSearchLinks(info, [{ urlTemplate: "https://x.to/${name}", iconUrl: "javascript:alert(1)" }]);
         expect(links.at(-1).url).toContain("https://x.to/");
         expect(links.at(-1).iconUrl).toBeUndefined();
     });

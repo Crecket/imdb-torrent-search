@@ -57,7 +57,7 @@ test("aborts once the timeout elapses", async () => {
         (url, init) =>
             new Promise((_resolve, reject) => {
                 init.signal.addEventListener("abort", () => reject(new Error("Aborted")));
-            })
+            }),
     );
     await expect(fetchJson("https://x.test/a", { fetchImpl, timeoutMs: 5, retries: 0 })).rejects.toThrow("Aborted");
 });

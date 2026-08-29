@@ -36,13 +36,19 @@
                 into your template. Search for a film on your site, then swap the title in the URL for
                 <code>${name}</code>.
             </p>
-            <pre class="example">https://example.to/search?q=${name}+${year}
+            <pre class="example">
+https://example.to/search?q=${name}+${year}
 https://example.to/search?q=${imdbID}+2160p</pre>
 
             <form id="custom_torrent_form" novalidate>
                 <label class="field">
                     <span>URL template</span>
-                    <input id="url_template_custom" type="text" required placeholder="https://example.to/search?q=${name}" />
+                    <input
+                        id="url_template_custom"
+                        type="text"
+                        required
+                        placeholder="https://example.to/search?q=${name}"
+                    />
                 </label>
                 <label class="field">
                     <span>Icon URL <em>optional</em></span>

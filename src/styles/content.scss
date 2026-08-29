@@ -1,5 +1,20 @@
+// The panel owns every colour it uses.
+//
+// IMDb renders title pages on a near-black background and restyles anchors to
+// its own blue, so anything translucent or inherited here ends up unreadable.
+// Nothing below relies on inheritance from the host page.
+
 $accent: #f5c518; // IMDb yellow
-$border: rgba(0, 0, 0, 0.12);
+
+// Dark surface, matching IMDb's current title pages.
+$panel-bg: #1a1a1c;
+$panel-fg: #e8e8ea;
+$panel-muted: #a5a8ad;
+$panel-border: #3a3a3e;
+$panel-row-hover: #26262a;
+$panel-chip: #2a2a2e;
+$seeds: #4ade80;
+$peers: #f87171;
 
 #imdb-torrent-search-icon {
     width: 20px;
@@ -15,19 +30,41 @@ $border: rgba(0, 0, 0, 0.12);
     }
 }
 
-#imdb-torrent-search-panel {
-    &:not(:empty) {
-        margin: 12px 0;
-        padding: 12px;
-        border: 1px solid $border;
-        border-radius: 6px;
-        background: rgba(127, 127, 127, 0.08);
-        font-size: 13px;
-        line-height: 1.5;
+#imdb-torrent-search-panel:not(:empty) {
+    margin: 12px 0;
+    padding: 12px 14px;
+    border: 1px solid $panel-border;
+    border-radius: 8px;
+    background: $panel-bg;
+    color: $panel-fg;
+    color-scheme: dark;
+    font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: left;
+
+    // IMDb styles descendant anchors globally; override rather than inherit.
+    a,
+    a:link,
+    a:visited,
+    a:hover,
+    a:active {
+        color: $accent;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
     }
 
     .its-message {
         margin: 6px 0;
+        color: $panel-fg;
     }
 
     .its-links {
@@ -37,21 +74,23 @@ $border: rgba(0, 0, 0, 0.12);
         gap: 6px;
         margin-bottom: 10px;
         padding-bottom: 10px;
-        border-bottom: 1px solid $border;
+        border-bottom: 1px solid $panel-border;
     }
 
     .its-links-label {
         margin-right: 4px;
+        color: $panel-muted;
+        font-weight: 600;
     }
 
     .its-pill {
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        padding: 3px 9px;
-        border: 1px solid $border;
+        padding: 3px 10px;
+        border: 1px solid $panel-border;
         border-radius: 999px;
-        text-decoration: none;
+        background: $panel-chip;
         font-size: 12px;
         white-space: nowrap;
 
@@ -63,34 +102,47 @@ $border: rgba(0, 0, 0, 0.12);
         &:hover {
             border-color: $accent;
             background: rgba(245, 197, 24, 0.16);
+            text-decoration: none;
         }
     }
 
     .its-table {
         width: 100%;
         border-collapse: collapse;
+        background: transparent;
+        color: $panel-fg;
 
         th,
         td {
-            padding: 4px 8px;
+            padding: 5px 8px;
+            border: 0;
+            background: transparent;
+            color: inherit;
             text-align: left;
             vertical-align: middle;
         }
 
         thead th,
         .its-subhead th {
+            color: $panel-muted;
+            font-size: 11px;
             font-weight: 600;
-            border-bottom: 1px solid $border;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border-bottom: 1px solid $panel-border;
         }
 
         .its-season th {
-            padding-top: 12px;
-            font-size: 14px;
-            color: inherit;
+            padding-top: 14px;
+            color: $accent;
+            font-size: 13px;
+            letter-spacing: normal;
+            text-transform: none;
+            border-bottom: 0;
         }
 
         tbody tr:hover {
-            background: rgba(127, 127, 127, 0.1);
+            background: $panel-row-hover;
         }
     }
 
@@ -104,16 +156,16 @@ $border: rgba(0, 0, 0, 0.12);
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        margin-right: 8px;
-        text-decoration: none;
+        margin-right: 10px;
         white-space: nowrap;
     }
 
     .its-seeds {
-        color: #1a7f37;
+        color: $seeds;
+        font-weight: 600;
     }
 
     .its-peers {
-        color: #a40e26;
+        color: $peers;
     }
 }

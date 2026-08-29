@@ -7,7 +7,7 @@ function mockStorage(initial = {}) {
         storage: {
             local: {
                 get: jest.fn(async (keys) =>
-                    Object.fromEntries(keys.filter((k) => k in store).map((k) => [k, store[k]]))
+                    Object.fromEntries(keys.filter((k) => k in store).map((k) => [k, store[k]])),
                 ),
                 set: jest.fn(async (obj) => {
                     store = { ...store, ...obj };

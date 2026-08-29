@@ -39,12 +39,7 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": [
-                "img/logo-16x16.png",
-                "img/icon-magnet.gif",
-                "img/1337x-favicon.png",
-                "img/tpb-favicon.png"
-            ],
+            "resources": ["img/logo-16x16.png", "img/icon-magnet.gif", "img/1337x-favicon.png", "img/tpb-favicon.png"],
             "matches": ["https://*.imdb.com/*"]
         }
     ],

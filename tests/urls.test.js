@@ -1,12 +1,9 @@
 import { isSafeUrl, expandTemplate } from "../src/shared/urls.js";
 
 describe("isSafeUrl", () => {
-    test.each(["https://example.com/a", "http://example.com/a", "magnet:?xt=urn:btih:abc"])(
-        "accepts %s",
-        (url) => {
-            expect(isSafeUrl(url)).toBe(true);
-        }
-    );
+    test.each(["https://example.com/a", "http://example.com/a", "magnet:?xt=urn:btih:abc"])("accepts %s", (url) => {
+        expect(isSafeUrl(url)).toBe(true);
+    });
 
     test.each([
         "javascript:alert(1)",
