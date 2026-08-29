@@ -43,6 +43,9 @@ export function parseStream(stream) {
     const source = /⚙️\s*([^\s\n]+)/.exec(title)?.[1] ?? "";
 
     return {
+        // The release name is the only thing distinguishing entries whose
+        // quality could not be parsed; it feeds the tooltip and info icon.
+        title: filename,
         quality: readQuality(filename) ?? readQuality(stream.name) ?? "unknown",
         type: source,
         source,

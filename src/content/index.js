@@ -83,22 +83,31 @@ function wireSeasonPacks(panel, imdbID) {
 
     const load = async (season) => {
         const token = (requestToken += 1);
-        show(renderSeasonPacks([], { magnetIcon, season, state: "loading" }));
 
+        // The whole body is guarded, not just the network call: a render fault
+        // here previously escaped as an unhandled rejection and took the
+        // season-pack row down silently.
         try {
+            show(renderSeasonPacks([], { magnetIcon, season, state: "loading" }));
+
             const result = await sendMessage({ type: MESSAGE_TYPES.SEASON, imdbID, season });
+
             // Ignore a response for a season the viewer has already moved off.
             if (token !== requestToken || !panel.isConnected) return;
             show(renderSeasonPacks(result.data, { magnetIcon, season }));
         } catch (error) {
             logger.error(error);
             if (token !== requestToken || !panel.isConnected) return;
-            show(renderSeasonPacks([], { magnetIcon, season }));
+            try {
+                show(renderSeasonPacks([], { magnetIcon, season }));
+            } catch (renderError) {
+                logger.error(renderError);
+            }
         }
     };
 
-    select.addEventListener("change", (event) => load(Number(event.target.value)));
-    load(Number(select.value));
+    select.addEventListener("change", (event) => load(Number(event.target.value)).catch(logger.error));
+    load(Number(select.value)).catch(logger.error);
 }
 
 /** The season currently chosen, so a background refresh does not yank the

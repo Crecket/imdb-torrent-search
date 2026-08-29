@@ -4,6 +4,8 @@ import {
     renderSeriesTable,
     renderLinks,
     renderMessage,
+    renderInfoIcon,
+    isUnknownQuality,
     renderSeasonPacks,
     renderStatus,
     formatAge,
@@ -457,5 +459,63 @@ describe("renderSeasonPacks", () => {
         document.body.append(el);
         expect(el.querySelectorAll("img[onerror]")).toHaveLength(0);
         expect(globalThis.PWNED).toBeUndefined();
+    });
+});
+
+describe("unknown-quality info icon", () => {
+    const movie = (over = {}) => ({
+        quality: "1080p",
+        size: "2 GB",
+        seeds: 10,
+        magnet: "magnet:?xt=urn:btih:a",
+        title: "Some.Release.Name.WEB.x264-GROUP",
+        ...over,
+    });
+
+    test("isUnknownQuality flags only unparsed qualities", () => {
+        expect(isUnknownQuality("unknown")).toBe(true);
+        expect(isUnknownQuality(undefined)).toBe(true);
+        expect(isUnknownQuality("")).toBe(true);
+        expect(isUnknownQuality("1080p")).toBe(false);
+    });
+
+    test("adds an info icon carrying the full release name when quality is unknown", () => {
+        const table = renderMovieTable([movie({ quality: "unknown" })], ICON);
+        const info = table.querySelector(".its-info");
+        expect(info).not.toBeNull();
+        expect(info.getAttribute("title")).toBe("Some.Release.Name.WEB.x264-GROUP");
+        expect(info.getAttribute("aria-label")).toBe("Some.Release.Name.WEB.x264-GROUP");
+    });
+
+    test("the icon is keyboard reachable", () => {
+        const table = renderMovieTable([movie({ quality: "unknown" })], ICON);
+        expect(table.querySelector(".its-info").getAttribute("tabindex")).toBe("0");
+    });
+
+    test("no icon when the quality parsed cleanly", () => {
+        const table = renderMovieTable([movie()], ICON);
+        expect(table.querySelector(".its-info")).toBeNull();
+    });
+
+    test("no icon when there is no release name to show", () => {
+        const table = renderMovieTable([movie({ quality: "unknown", title: undefined })], ICON);
+        expect(table.querySelector(".its-info")).toBeNull();
+        expect(table.querySelectorAll("tbody tr")).toHaveLength(1);
+    });
+
+    test("a malicious release name stays inert in the tooltip", () => {
+        const table = renderMovieTable(
+            [movie({ quality: "unknown", title: '<img src=x onerror="globalThis.PWNED=1">' })],
+            ICON,
+        );
+        document.body.append(table);
+        expect(table.querySelectorAll("img[onerror]")).toHaveLength(0);
+        expect(globalThis.PWNED).toBeUndefined();
+        expect(table.querySelector(".its-info").getAttribute("title")).toBe('<img src=x onerror="globalThis.PWNED=1">');
+    });
+
+    test("renderInfoIcon returns null for empty text", () => {
+        expect(renderInfoIcon("")).toBeNull();
+        expect(renderInfoIcon(undefined)).toBeNull();
     });
 });

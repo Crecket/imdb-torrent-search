@@ -119,6 +119,30 @@ export function limitPerQuality(torrents, max = EPISODE_PER_QUALITY) {
     return (torrents ?? []).filter((torrent) => kept.has(torrent));
 }
 
+/** Qualities we could not parse out of a release name. */
+const UNKNOWN_QUALITY = new Set(["unknown", "", undefined, null]);
+
+export function isUnknownQuality(quality) {
+    return UNKNOWN_QUALITY.has(quality);
+}
+
+/**
+ * Hoverable info marker carrying the full release name.
+ *
+ * Shown when the quality could not be parsed, where the table would otherwise
+ * say "unknown" with nothing to identify the release. Focusable so the tooltip
+ * is reachable without a mouse.
+ */
+export function renderInfoIcon(text) {
+    if (!text) return null;
+    const node = el("span", {
+        className: "its-info",
+        text: "i",
+        attrs: { title: text, "aria-label": text, tabindex: "0", role: "note" },
+    });
+    return node;
+}
+
 export function renderMessage(text) {
     return el("p", { className: "its-message", text });
 }
@@ -178,7 +202,13 @@ export function renderMovieTable(allTorrents, { magnetIcon, perQuality = MOVIE_P
     for (const torrent of torrents) {
         const row = el("tr");
 
-        row.append(el("td", { className: "its-quality", text: torrent.quality ?? "" }));
+        const qualityCell = el("td", { className: "its-quality" });
+        qualityCell.append(el("span", { text: torrent.quality ?? "" }));
+        if (isUnknownQuality(torrent.quality)) {
+            const info = renderInfoIcon(torrent.title);
+            if (info) qualityCell.append(info);
+        }
+        row.append(qualityCell);
         row.append(el("td", { text: torrent.size ?? "" }));
 
         const peersCell = el("td");

@@ -29,6 +29,7 @@ test("normalises a torrent list", async () => {
 
     expect(result).toEqual([
         {
+            title: "The Matrix 1080p bluray",
             quality: "1080p",
             type: "bluray",
             size: "2.1 GB",

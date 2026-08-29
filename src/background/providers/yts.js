@@ -22,6 +22,7 @@ const QUALITY_RANK = { "2160p": 5, "1440p": 4, "1080p": 3, "720p": 2, "480p": 1 
 
 function normalise(torrent, title) {
     return {
+        title: [title, torrent.quality, torrent.type].filter(Boolean).join(" "),
         quality: torrent.quality ?? "unknown",
         type: torrent.type ?? "",
         size: torrent.size ?? "",
