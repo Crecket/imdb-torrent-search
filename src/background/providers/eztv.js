@@ -16,6 +16,34 @@ const QUALITY = /\b(240p|360p|480p|720p|1080p|1440p|2160p|4K|8K)\b/i;
 
 const CANONICAL = { "4k": "4K", "8k": "8K" };
 
+const SOURCE = /\b(BluRay|BRRip|WEB[- ]?DL|WEBRip|WEB|HDTV|DVDRip|HDRip|REMUX)\b/i;
+
+const SOURCE_LABELS = {
+    bluray: "BluRay",
+    brrip: "BRRip",
+    webdl: "WEB-DL",
+    "web-dl": "WEB-DL",
+    "web dl": "WEB-DL",
+    webrip: "WEBRip",
+    web: "WEB",
+    hdtv: "HDTV",
+    dvdrip: "DVDRip",
+    hdrip: "HDRip",
+    remux: "REMUX",
+};
+
+/**
+ * Release source (WEB, HDTV, BluRay...) pulled from the release name.
+ * A season often lists the same quality several times over, so this is what
+ * makes those entries distinguishable at a glance.
+ */
+export function parseSource(title) {
+    if (typeof title !== "string") return null;
+    const match = SOURCE.exec(title);
+    if (!match) return null;
+    return SOURCE_LABELS[match[1].toLowerCase().replace(/[- ]/g, "")] ?? match[1];
+}
+
 /** Pull a display quality out of a release title, or null when absent. */
 export function parseQuality(title) {
     if (typeof title !== "string") return null;
@@ -31,6 +59,7 @@ function normalise(row) {
         episode: Number(row.episode) || 0,
         title: typeof row.title === "string" ? row.title : "",
         quality: parseQuality(row.title),
+        source: parseSource(row.title),
         magnet: row.magnet_url,
         seeds: Number(row.seeds) || 0,
         peers: Number(row.peers) || 0,

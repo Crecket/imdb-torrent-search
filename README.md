@@ -23,9 +23,9 @@ Developer mode enabled.
 
 ```bash
 npm test        # jest, jsdom
+npm run lint    # eslint
 npm run build   # production bundles into extension/build/
 npm run release # zips extension/ into releases/
-npm run format  # prettier
 ```
 
 `extension/build/` is generated and gitignored. `npm run build` also copies the
@@ -34,13 +34,13 @@ in one place only.
 
 ## Layout
 
-| Path | Purpose |
-|---|---|
-| `src/background/` | Service worker and the YTS / EZTV providers |
-| `src/content/` | IMDb page reader, renderer, and the injected UI |
-| `src/popup/` | Settings UI |
-| `src/shared/` | Storage, messaging, URL safety, link catalogue |
-| `tests/` | Jest suite; `tests/fixtures/` holds saved IMDb markup |
+| Path              | Purpose                                               |
+| ----------------- | ----------------------------------------------------- |
+| `src/background/` | Service worker and the YTS / EZTV providers           |
+| `src/content/`    | IMDb page reader, renderer, and the injected UI       |
+| `src/popup/`      | Settings UI                                           |
+| `src/shared/`     | Storage, messaging, URL safety, link catalogue        |
+| `tests/`          | Jest suite; `tests/fixtures/` holds saved IMDb markup |
 
 Everything outside the three entry points (`service-worker.js`,
 `content/index.js`, `popup/index.js`) is free of `chrome.*` at import time, so
@@ -48,12 +48,12 @@ it runs under jsdom without a browser.
 
 ## External services
 
-| Service | Endpoint | Notes |
-|---|---|---|
-| Torrentio | `torrentio.strem.fun` | Movies, primary. Aggregates many trackers; ~100ms |
-| YTS | `movies-api.accel.li`, `yts.mx` | Movies, fallback only. Raced; often slow or timing out |
-| EZTV | `eztvx.to` | Series. `eztv.re` 301s here, so both hosts are permitted |
-| IMDb | page scrape | JSON-LD first, `data-testid` selectors as fallback |
+| Service   | Endpoint                        | Notes                                                    |
+| --------- | ------------------------------- | -------------------------------------------------------- |
+| Torrentio | `torrentio.strem.fun`           | Movies, primary. Aggregates many trackers; ~100ms        |
+| YTS       | `movies-api.accel.li`, `yts.mx` | Movies, fallback only. Raced; often slow or timing out   |
+| EZTV      | `eztvx.to`                      | Series. `eztv.re` 301s here, so both hosts are permitted |
+| IMDb      | page scrape                     | JSON-LD first, `data-testid` selectors as fallback       |
 
 ## After installing
 
@@ -71,10 +71,17 @@ browser is exposed by the service worker itself - nothing to copy-paste. Open
 `chrome://extensions` -> **service worker**:
 
 ```js
-checkHosts()   // times every torrent API on your network
-showCache()    // what is cached, and how old
-clearCache()   // drop cached lookups, keeping settings
+checkHosts(); // times every torrent API on your network
+showCache(); // what is cached, and how old
+clearCache(); // drop cached lookups, keeping settings
 ```
+
+## Results shown
+
+Torrent indexes return many near-identical releases, so results are capped:
+three per quality for movies, two per quality for each episode, always the
+best-seeded. Hovering a magnet button shows the full release name, seeders and
+size. Series also offer whole-season packs where the index has them.
 
 ## Caching
 

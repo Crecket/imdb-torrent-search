@@ -1,6 +1,7 @@
 import { MESSAGE_TYPES, ok, fail } from "../shared/messages.js";
 import { fetchMovieTorrents } from "./providers/movies.js";
 import { fetchSeriesTorrents } from "./providers/eztv.js";
+import { fetchSeasonPacks } from "./providers/torrentio.js";
 import { cacheKey, isStale, readCache, writeCache } from "./cache.js";
 import logger from "../shared/logger.js";
 import "./diagnostics.js";
@@ -12,15 +13,17 @@ import "./diagnostics.js";
  */
 const inFlight = new Map();
 
-function fetchFor(type, imdbID) {
-    return type === MESSAGE_TYPES.SERIES ? fetchSeriesTorrents(imdbID) : fetchMovieTorrents(imdbID);
+function fetchFor(type, imdbID, season) {
+    if (type === MESSAGE_TYPES.SERIES) return fetchSeriesTorrents(imdbID);
+    if (type === MESSAGE_TYPES.SEASON) return fetchSeasonPacks(imdbID, season);
+    return fetchMovieTorrents(imdbID);
 }
 
-function revalidate(type, imdbID, key) {
+function revalidate(type, imdbID, key, season) {
     const existing = inFlight.get(key);
     if (existing) return existing;
 
-    const promise = fetchFor(type, imdbID)
+    const promise = fetchFor(type, imdbID, season)
         .then((data) => writeCache(key, data))
         .finally(() => inFlight.delete(key));
 
@@ -33,17 +36,20 @@ async function handle(request) {
         throw new Error("Malformed request: missing imdbID");
     }
 
-    const { type, imdbID } = request;
-    if (type !== MESSAGE_TYPES.MOVIE && type !== MESSAGE_TYPES.SERIES) {
+    const { type, imdbID, season } = request;
+    if (!Object.values(MESSAGE_TYPES).includes(type)) {
         throw new Error(`Unknown request type: ${type}`);
     }
+    if (type === MESSAGE_TYPES.SEASON && !Number.isInteger(season)) {
+        throw new Error("Season lookups require an integer season");
+    }
 
-    const key = cacheKey(type, imdbID);
+    const key = type === MESSAGE_TYPES.SEASON ? cacheKey(type, `${imdbID}:${season}`) : cacheKey(type, imdbID);
 
     // Explicit refresh: the caller is already showing stale data and is willing
     // to wait for the network.
     if (request.revalidate) {
-        const entry = await revalidate(type, imdbID, key);
+        const entry = await revalidate(type, imdbID, key, season);
         return { data: entry.data, fetchedAt: entry.fetchedAt, stale: false };
     }
 
@@ -53,12 +59,12 @@ async function handle(request) {
 
         // Start the refresh now rather than after the caller's round trip; the
         // caller's follow-up request will join this same promise.
-        if (stale) revalidate(type, imdbID, key).catch(logger.error);
+        if (stale) revalidate(type, imdbID, key, season).catch(logger.error);
 
         return { data: cached.data, fetchedAt: cached.fetchedAt, stale };
     }
 
-    const entry = await revalidate(type, imdbID, key);
+    const entry = await revalidate(type, imdbID, key, season);
     return { data: entry.data, fetchedAt: entry.fetchedAt, stale: false };
 }
 

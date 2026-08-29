@@ -4,21 +4,16 @@
     "short_name": "IMDB Torrent Search",
     "description": "A simple extension that displays torrents for IMDB movies and series directly onto the page",
     "version": "2.0.0",
+    "minimum_chrome_version": "110",
     "background": {
         "service_worker": "build/service-worker.js",
         "type": "module"
     },
     "content_scripts": [
         {
-            "matches": [
-                "https://*.imdb.com/title/*"
-            ],
-            "css": [
-                "build/content.css"
-            ],
-            "js": [
-                "build/content.js"
-            ],
+            "matches": ["https://*.imdb.com/title/*"],
+            "css": ["build/content.css"],
+            "js": ["build/content.js"],
             "run_at": "document_idle"
         }
     ],
@@ -36,9 +31,7 @@
         "48": "img/logo-48x48.png",
         "128": "img/logo-128x128.png"
     },
-    "permissions": [
-        "storage"
-    ],
+    "permissions": ["storage"],
     "host_permissions": [
         "https://torrentio.strem.fun/*",
         "https://movies-api.accel.li/*",
@@ -48,15 +41,8 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": [
-                "img/logo-16x16.png",
-                "img/icon-magnet.gif",
-                "img/1337x-favicon.png",
-                "img/tpb-favicon.png"
-            ],
-            "matches": [
-                "https://*.imdb.com/*"
-            ]
+            "resources": ["img/logo-16x16.png", "img/icon-magnet.gif", "img/1337x-favicon.png", "img/tpb-favicon.png"],
+            "matches": ["https://*.imdb.com/*"]
         }
     ],
     "content_security_policy": {

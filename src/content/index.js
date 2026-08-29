@@ -3,7 +3,15 @@ import { DEFAULTS, getSettings } from "../shared/storage.js";
 import { buildSearchLinks } from "../shared/links.js";
 import logger from "../shared/logger.js";
 import { readImdbId, readPageInfo } from "./imdb-page.js";
-import { formatAge, renderLinks, renderMessage, renderMovieTable, renderSeriesTable, renderStatus } from "./render.js";
+import {
+    formatAge,
+    renderLinks,
+    renderMessage,
+    renderMovieTable,
+    renderSeasonPacks,
+    renderSeriesTable,
+    renderStatus,
+} from "./render.js";
 
 const ICON_ID = "imdb-torrent-search-icon";
 const PANEL_ID = "imdb-torrent-search-panel";
@@ -57,6 +65,42 @@ function buildTable(type, torrents, defaultSeason) {
         : renderMovieTable(torrents, { magnetIcon });
 }
 
+/**
+ * Load whole-season downloads for the season currently selected, and refresh
+ * them whenever the viewer switches seasons.
+ */
+function wireSeasonPacks(panel, imdbID) {
+    const select = panel.querySelector(".its-season-select");
+    if (!select) return;
+
+    let requestToken = 0;
+
+    const show = (node) => {
+        const existing = panel.querySelector(".its-packs");
+        if (existing) existing.replaceWith(node);
+        else select.closest(".its-season-picker")?.after(node);
+    };
+
+    const load = async (season) => {
+        const token = (requestToken += 1);
+        show(renderSeasonPacks([], { magnetIcon, season, state: "loading" }));
+
+        try {
+            const result = await sendMessage({ type: MESSAGE_TYPES.SEASON, imdbID, season });
+            // Ignore a response for a season the viewer has already moved off.
+            if (token !== requestToken || !panel.isConnected) return;
+            show(renderSeasonPacks(result.data, { magnetIcon, season }));
+        } catch (error) {
+            logger.error(error);
+            if (token !== requestToken || !panel.isConnected) return;
+            show(renderSeasonPacks([], { magnetIcon, season }));
+        }
+    };
+
+    select.addEventListener("change", (event) => load(Number(event.target.value)));
+    load(Number(select.value));
+}
+
 /** The season currently chosen, so a background refresh does not yank the
  *  viewer back to the default season mid-browse. */
 function selectedSeason(panel) {
@@ -106,6 +150,7 @@ async function loadResults(imdbID) {
     if (document.getElementById(PANEL_ID) !== panel) return; // navigated away mid-request
 
     slots.results.replaceChildren(buildTable(type, cached.data, undefined));
+    if (type === MESSAGE_TYPES.SERIES) wireSeasonPacks(slots.results, imdbID);
 
     if (!cached.stale) {
         slots.status.replaceChildren(renderStatus(`Updated ${formatAge(Date.now() - cached.fetchedAt)}.`, "fresh"));
@@ -123,6 +168,7 @@ async function loadResults(imdbID) {
         if (document.getElementById(PANEL_ID) !== panel) return;
 
         slots.results.replaceChildren(buildTable(type, fresh.data, selectedSeason(panel)));
+        if (type === MESSAGE_TYPES.SERIES) wireSeasonPacks(slots.results, imdbID);
         slots.status.replaceChildren(renderStatus("Updated just now.", "fresh"));
     } catch (error) {
         logger.error(error);
@@ -140,6 +186,8 @@ async function loadResults(imdbID) {
 
 function toggle(imdbID) {
     isOpen = !isOpen;
+    document.getElementById(ICON_ID)?.setAttribute("aria-expanded", String(isOpen));
+
     if (!isOpen) {
         setPanel();
         return;
@@ -153,16 +201,29 @@ function mount(imdbID) {
     const titleNode = findTitleNode();
     if (!titleNode) return false;
 
+    // A real button, not a clickable <img>: the icon-only version could not be
+    // reached or activated from the keyboard and announced nothing to a
+    // screen reader.
+    const button = document.createElement("button");
+    button.id = ICON_ID;
+    button.type = "button";
+    button.title = "Toggle torrent results";
+    button.setAttribute("aria-label", "Toggle torrent results");
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-controls", PANEL_ID);
+
     const icon = document.createElement("img");
-    icon.id = ICON_ID;
     icon.src = logoIcon;
-    icon.alt = "Toggle torrent results";
-    icon.title = "Toggle torrent results";
-    icon.addEventListener("click", () => toggle(imdbID));
-    titleNode.append(icon);
+    icon.alt = "";
+    button.append(icon);
+
+    button.addEventListener("click", () => toggle(imdbID));
+    titleNode.append(button);
 
     const panel = document.createElement("div");
     panel.id = PANEL_ID;
+    panel.setAttribute("role", "region");
+    panel.setAttribute("aria-label", "Torrent results");
     (titleNode.parentElement ?? titleNode).append(panel);
 
     if (settings.autoShow) toggle(imdbID);

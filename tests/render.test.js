@@ -4,8 +4,14 @@ import {
     renderSeriesTable,
     renderLinks,
     renderMessage,
+    renderSeasonPacks,
     renderStatus,
     formatAge,
+    formatBytes,
+    describeTorrent,
+    limitPerQuality,
+    MOVIE_PER_QUALITY,
+    EPISODE_PER_QUALITY,
 } from "../src/content/render.js";
 
 const ICON = { magnetIcon: "chrome-extension://abc/img/icon-magnet.gif" };
@@ -278,6 +284,178 @@ describe("movie download button", () => {
         const table = renderMovieTable([movie({ source: '<img src=x onerror="globalThis.PWNED=1">' })], ICON);
         document.body.append(table);
         expect(table.querySelectorAll("img[onerror]")).toHaveLength(0);
+        expect(globalThis.PWNED).toBeUndefined();
+    });
+});
+
+describe("torrent descriptions", () => {
+    test("formatBytes renders readable sizes", () => {
+        expect(formatBytes(1024)).toBe("1 KB");
+        expect(formatBytes(1536 * 1024)).toBe("1.5 MB");
+        expect(formatBytes(2 * 1024 ** 3)).toBe("2 GB");
+        expect(formatBytes(15 * 1024 ** 3)).toBe("15 GB");
+        expect(formatBytes(512)).toBe("512 B");
+        expect(formatBytes(0)).toBe("");
+        expect(formatBytes(undefined)).toBe("");
+    });
+
+    test("describeTorrent leads with the release name", () => {
+        const text = describeTorrent({
+            title: "Show.S01E01.720p.HDTV.x264-GROUP",
+            seeds: 12,
+            sizeBytes: 1024 ** 3,
+            source: "HDTV",
+        });
+        expect(text).toContain("Show.S01E01.720p.HDTV.x264-GROUP");
+        expect(text).toContain("12 seeders");
+        expect(text).toContain("1 GB");
+    });
+
+    test("describeTorrent copes with a torrent carrying almost nothing", () => {
+        expect(describeTorrent({ title: "Just.A.Name" })).toBe("Just.A.Name");
+        expect(describeTorrent(null)).toBe("");
+    });
+
+    test("series magnet links carry the release name as a tooltip", () => {
+        const el = renderSeriesTable(
+            [episode({ title: "Show.S01E01.720p.HDTV.x264-GROUP", quality: "720p", source: "HDTV", seeds: 9 })],
+            ICON,
+        );
+        const link = el.querySelector("a");
+        expect(link.getAttribute("title")).toContain("Show.S01E01.720p.HDTV.x264-GROUP");
+    });
+
+    test("repeated qualities are distinguished by their source label", () => {
+        const el = renderSeriesTable(
+            [
+                episode({ episode: 1, quality: "720p", source: "HDTV", magnet: "magnet:?xt=urn:btih:a" }),
+                episode({ episode: 1, quality: "720p", source: "WEB-DL", magnet: "magnet:?xt=urn:btih:b" }),
+            ],
+            ICON,
+        );
+        const sources = [...el.querySelectorAll(".its-src")].map((n) => n.textContent);
+        expect(sources).toEqual(["HDTV", "WEB-DL"]);
+    });
+
+    test("movie magnet buttons carry a tooltip too", () => {
+        const table = renderMovieTable(
+            [{ quality: "1080p", size: "2 GB", seeds: 5, magnet: "magnet:?xt=urn:btih:a", title: "M.1080p.WEB" }],
+            ICON,
+        );
+        expect(table.querySelector("a").getAttribute("title")).toContain("M.1080p.WEB");
+    });
+});
+
+describe("limitPerQuality", () => {
+    const t = (quality, seeds) => ({ quality, seeds, magnet: `magnet:?xt=urn:btih:${quality}${seeds}` });
+
+    test("keeps the two best-seeded releases of each quality", () => {
+        const kept = limitPerQuality([t("1080p", 5), t("1080p", 90), t("1080p", 40), t("720p", 3)]);
+        expect(kept.map((x) => x.seeds).sort((a, b) => b - a)).toEqual([90, 40, 3]);
+    });
+
+    test("respects an explicit limit", () => {
+        expect(limitPerQuality([t("1080p", 1), t("1080p", 2), t("1080p", 3)], 1)).toHaveLength(1);
+        expect(limitPerQuality([t("1080p", 1), t("1080p", 2), t("1080p", 3)], 1)[0].seeds).toBe(3);
+    });
+
+    test("preserves the incoming quality order rather than regrouping", () => {
+        const kept = limitPerQuality([t("2160p", 1), t("1080p", 9), t("720p", 5)]);
+        expect(kept.map((x) => x.quality)).toEqual(["2160p", "1080p", "720p"]);
+    });
+
+    test("treats missing quality as its own bucket", () => {
+        const kept = limitPerQuality([t(undefined, 1), t(undefined, 2), t(undefined, 3)]);
+        expect(kept).toHaveLength(2);
+    });
+
+    test("tolerates an empty or missing list", () => {
+        expect(limitPerQuality([])).toEqual([]);
+        expect(limitPerQuality(undefined)).toEqual([]);
+    });
+
+    test("movies keep three per quality, episodes two", () => {
+        expect(MOVIE_PER_QUALITY).toBe(3);
+        expect(EPISODE_PER_QUALITY).toBe(2);
+    });
+
+    test("movie tables cap each quality at three by default", () => {
+        const many = Array.from({ length: 12 }, (_, i) => ({
+            quality: "1080p",
+            seeds: i,
+            magnet: `magnet:?xt=urn:btih:${"a".repeat(39)}${i}`,
+        }));
+        const table = renderMovieTable(many, ICON);
+        expect(table.querySelectorAll("tbody tr")).toHaveLength(MOVIE_PER_QUALITY);
+        // The kept rows are the best seeded; order follows the provider's own
+        // sort, which limitPerQuality deliberately preserves.
+        const seeds = [...table.querySelectorAll(".its-seeds")].map((n) => Number(n.textContent));
+        expect(seeds.sort((a, b) => a - b)).toEqual([9, 10, 11]);
+    });
+
+    test("series episodes cap each quality too", () => {
+        const many = Array.from({ length: 8 }, (_, i) =>
+            episode({ season: 1, episode: 1, quality: "720p", seeds: i, magnet: `magnet:?xt=urn:btih:b${i}` }),
+        );
+        const el = renderSeriesTable(many, ICON);
+        expect(el.querySelectorAll(".its-qualities a")).toHaveLength(2);
+    });
+});
+
+describe("renderSeasonPacks", () => {
+    const pack = (over = {}) => ({
+        quality: "2160p",
+        size: "60 GB",
+        seeds: 40,
+        magnet: "magnet:?xt=urn:btih:a",
+        title: "Show.S01.2160p.BluRay",
+        ...over,
+    });
+
+    test("shows a loading note while the lookup is in flight", () => {
+        const el = renderSeasonPacks([], { magnetIcon: ICON.magnetIcon, season: 1, state: "loading" });
+        expect(el.textContent).toContain("Looking for season packs");
+        expect(el.querySelectorAll("a")).toHaveLength(0);
+    });
+
+    test("labels the season and renders one button per quality", () => {
+        const el = renderSeasonPacks([pack(), pack({ quality: "1080p", magnet: "magnet:?xt=urn:btih:b" })], {
+            magnetIcon: ICON.magnetIcon,
+            season: 3,
+        });
+        expect(el.querySelector(".its-packs-label").textContent).toBe("Full season 3");
+        expect(el.querySelectorAll("a")).toHaveLength(2);
+    });
+
+    test("keeps only the best-seeded pack per quality", () => {
+        const el = renderSeasonPacks(
+            [pack({ seeds: 5, magnet: "magnet:?xt=urn:btih:a" }), pack({ seeds: 90, magnet: "magnet:?xt=urn:btih:b" })],
+            { magnetIcon: ICON.magnetIcon, season: 1 },
+        );
+        expect(el.querySelectorAll("a")).toHaveLength(1);
+        expect(el.querySelector("a").getAttribute("title")).toContain("90 seeders");
+    });
+
+    test("says so when a season has no packs", () => {
+        const el = renderSeasonPacks([], { magnetIcon: ICON.magnetIcon, season: 2 });
+        expect(el.textContent).toContain("No season packs found.");
+    });
+
+    test("drops a pack with an unsafe magnet", () => {
+        const el = renderSeasonPacks([pack({ magnet: "javascript:alert(1)" })], {
+            magnetIcon: ICON.magnetIcon,
+            season: 1,
+        });
+        expect(el.querySelectorAll("a")).toHaveLength(0);
+    });
+
+    test("a malicious pack title stays inert", () => {
+        const el = renderSeasonPacks([pack({ title: '<img src=x onerror="globalThis.PWNED=1">' })], {
+            magnetIcon: ICON.magnetIcon,
+            season: 1,
+        });
+        document.body.append(el);
+        expect(el.querySelectorAll("img[onerror]")).toHaveLength(0);
         expect(globalThis.PWNED).toBeUndefined();
     });
 });

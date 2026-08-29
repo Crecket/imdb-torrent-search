@@ -17,16 +17,37 @@ $seeds: #4ade80;
 $peers: #f87171;
 
 #imdb-torrent-search-icon {
-    width: 20px;
-    height: 20px;
-    margin-left: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    margin-left: 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
     cursor: pointer;
     vertical-align: middle;
+    line-height: 0;
     opacity: 0.75;
-    transition: opacity 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        background 0.15s ease;
+
+    img {
+        width: 20px;
+        height: 20px;
+        display: block;
+    }
 
     &:hover {
         opacity: 1;
+        background: rgba(127, 127, 127, 0.22);
+    }
+
+    &:focus-visible {
+        opacity: 1;
+        outline: 2px solid $accent;
+        outline-offset: 1px;
     }
 }
 
@@ -216,6 +237,40 @@ $peers: #f87171;
     .its-total {
         margin-left: auto;
         font-size: 12px;
+        color: $panel-muted;
+    }
+
+    .its-packs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 10px;
+        padding: 9px 11px;
+        border: 1px dashed $panel-border;
+        border-radius: 7px;
+
+        &[data-state="loading"] {
+            opacity: 0.7;
+        }
+    }
+
+    .its-packs-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: $accent;
+    }
+
+    .its-packs-note {
+        font-size: 12px;
+        color: $panel-muted;
+    }
+
+    .its-src {
+        font-weight: 400;
+        font-size: 11px;
         color: $panel-muted;
     }
 

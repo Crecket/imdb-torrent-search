@@ -52,7 +52,7 @@ function textOf(doc, selectors) {
 
 function fromDom(doc) {
     // Non-breaking spaces are common in the legacy title markup.
-    const rawTitle = textOf(doc, TITLE_SELECTORS).replace(/ /g, " ");
+    const rawTitle = textOf(doc, TITLE_SELECTORS).replace(/\u00a0/g, " ");
     const title = rawTitle.replace(/\s*\((?:19|20)\d{2}\)\s*$/, "").trim();
 
     const metaNodes = [...doc.querySelectorAll('[data-testid="hero__pageTitle"] ~ ul li, .titleBar .subtext')];

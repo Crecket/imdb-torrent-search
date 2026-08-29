@@ -54,6 +54,42 @@ export function parseStream(stream) {
     };
 }
 
+const EPISODE_MARKER = /S\d{1,2}\s*E\d{1,3}|\b\d{1,2}x\d{2}\b/i;
+const SEASON_MARKER = /\bS\d{1,2}(?:\s*-\s*S?\d{1,2})?\b|\bSeason\s*\d{1,2}\b|\bComplete\b/i;
+
+/**
+ * True for a release covering a whole season rather than one episode.
+ *
+ * EZTV's per-IMDb endpoint returns no season packs at all, so Torrentio's
+ * series endpoint is the only source for them. A pack names a season but no
+ * individual episode.
+ */
+export function isSeasonPack(name) {
+    if (typeof name !== "string" || name.trim() === "") return false;
+    if (EPISODE_MARKER.test(name)) return false;
+    return SEASON_MARKER.test(name);
+}
+
+/**
+ * Season packs for one season. Torrentio keys series streams by episode, so we
+ * ask for episode 1 and keep only the entries that cover the whole season.
+ */
+export async function fetchSeasonPacks(imdbID, season, { fetchJsonImpl = fetchJson } = {}) {
+    const id = `${encodeURIComponent(imdbID)}:${Number(season)}:1`;
+    const payload = await fetchJsonImpl(`${TORRENTIO_BASE}/stream/series/${id}.json`, {
+        retries: 1,
+        timeoutMs: 10000,
+    });
+
+    const streams = Array.isArray(payload?.streams) ? payload.streams : [];
+
+    return streams
+        .filter((stream) => isSeasonPack(stream?.title?.split("\n")[0]))
+        .map(parseStream)
+        .filter(Boolean)
+        .sort((a, b) => (QUALITY_RANK[b.quality] ?? -1) - (QUALITY_RANK[a.quality] ?? -1) || b.seeds - a.seeds);
+}
+
 export async function fetchMovieTorrents(imdbID, { fetchJsonImpl = fetchJson } = {}) {
     const url = `${TORRENTIO_BASE}/stream/movie/${encodeURIComponent(imdbID)}.json`;
     const payload = await fetchJsonImpl(url, { retries: 1, timeoutMs: 10000 });

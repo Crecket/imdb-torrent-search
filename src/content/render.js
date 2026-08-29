@@ -17,10 +17,48 @@ function el(tag, { text, className, attrs } = {}) {
     return node;
 }
 
-function magnetLink(magnet, iconUrl, label) {
+const SIZE_STEPS = ["B", "KB", "MB", "GB", "TB"];
+
+/** Byte count as a short human string, for tooltips. */
+export function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "";
+    let value = bytes;
+    let step = 0;
+    while (value >= 1024 && step < SIZE_STEPS.length - 1) {
+        value /= 1024;
+        step += 1;
+    }
+    // One decimal only when it adds information: "1 KB", "1.5 MB", "2 GB".
+    const rounded = value >= 10 || step === 0 ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, "");
+    return `${rounded} ${SIZE_STEPS[step]}`;
+}
+
+/**
+ * Tooltip text for a magnet link. A season can list "720p" three times over, so
+ * the release name is the only thing that tells those entries apart.
+ */
+export function describeTorrent(torrent) {
+    if (!torrent) return "";
+
+    const parts = [];
+    if (torrent.seeds) parts.push(`${torrent.seeds} seeder${torrent.seeds === 1 ? "" : "s"}`);
+
+    const size = torrent.size || formatBytes(torrent.sizeBytes);
+    if (size) parts.push(size);
+    if (torrent.source) parts.push(torrent.source);
+
+    const name = torrent.title || "";
+    if (!name) return parts.join(" · ");
+    return parts.length > 0 ? `${name}\n${parts.join(" · ")}` : name;
+}
+
+function magnetLink(magnet, iconUrl, label, tooltip) {
     if (!isSafeUrl(magnet)) return null;
 
-    const anchor = el("a", { attrs: { href: magnet, rel: "noopener noreferrer" } });
+    const attrs = { href: magnet, rel: "noopener noreferrer" };
+    if (tooltip) attrs.title = tooltip;
+
+    const anchor = el("a", { attrs });
     if (isSafeImageUrl(iconUrl)) {
         anchor.append(el("img", { className: "its-magnet", attrs: { src: iconUrl, alt: "" } }));
     }
@@ -47,6 +85,38 @@ export function renderStatus(text, tone = "info") {
     const node = el("div", { className: "its-status", text: text ?? "" });
     node.dataset.tone = tone;
     return node;
+}
+
+/** Releases shown per quality tier. Movies get one more than episodes: a film
+ *  has a single row per release, where a season lists every episode. */
+export const MOVIE_PER_QUALITY = 3;
+export const EPISODE_PER_QUALITY = 2;
+
+/**
+ * Keep only the best-seeded few releases of each quality.
+ *
+ * Torrentio can return 50+ streams for one film and 60+ for one episode, most
+ * of them near-duplicates at the same quality. Showing every one buries the
+ * useful entries.
+ */
+export function limitPerQuality(torrents, max = EPISODE_PER_QUALITY) {
+    const buckets = new Map();
+
+    for (const torrent of torrents ?? []) {
+        const key = torrent.quality ?? "unknown";
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key).push(torrent);
+    }
+
+    const kept = new Set();
+    for (const bucket of buckets.values()) {
+        bucket.sort((a, b) => (b.seeds ?? 0) - (a.seeds ?? 0));
+        for (const torrent of bucket.slice(0, max)) kept.add(torrent);
+    }
+
+    // Preserve the incoming order (already sorted by quality) rather than
+    // regrouping, so the table still reads best-quality-first.
+    return (torrents ?? []).filter((torrent) => kept.has(torrent));
 }
 
 export function renderMessage(text) {
@@ -77,16 +147,23 @@ export function groupEpisodes(torrents) {
                 .sort((a, b) => a.episode - b.episode)
                 .map((entry) => ({
                     ...entry,
-                    torrents: entry.torrents.sort(
-                        (a, b) => (QUALITY_RANK[b.quality] ?? -1) - (QUALITY_RANK[a.quality] ?? -1),
+                    // Best quality first, best-seeded within a quality, then
+                    // capped so one episode cannot list 60 near-identical releases.
+                    torrents: limitPerQuality(
+                        entry.torrents.sort(
+                            (a, b) =>
+                                (QUALITY_RANK[b.quality] ?? -1) - (QUALITY_RANK[a.quality] ?? -1) ||
+                                (b.seeds ?? 0) - (a.seeds ?? 0),
+                        ),
                     ),
                 })),
         }));
 }
 
-export function renderMovieTable(torrents, { magnetIcon } = {}) {
-    if (!torrents || torrents.length === 0) return renderMessage("No direct torrents were found.");
+export function renderMovieTable(allTorrents, { magnetIcon, perQuality = MOVIE_PER_QUALITY } = {}) {
+    if (!allTorrents || allTorrents.length === 0) return renderMessage("No direct torrents were found.");
 
+    const torrents = limitPerQuality(allTorrents, perQuality);
     const showSource = torrents.some((torrent) => torrent.source);
 
     const table = el("table", { className: "its-table its-movies" });
@@ -117,7 +194,7 @@ export function renderMovieTable(torrents, { magnetIcon } = {}) {
         // A labelled button, not a bare 14px icon: the old icon-only cell was
         // effectively invisible against the panel background.
         const downloadCell = el("td", { className: "its-download" });
-        const link = magnetLink(torrent.magnet, magnetIcon, "Magnet");
+        const link = magnetLink(torrent.magnet, magnetIcon, "Magnet", describeTorrent(torrent));
         if (link) {
             link.classList.add("its-button");
             downloadCell.append(link);
@@ -186,9 +263,15 @@ export function renderSeriesTable(torrents, { magnetIcon, defaultSeason } = {}) 
 
             const qualityCell = el("td", { className: "its-qualities" });
             episode.torrents.forEach((torrent, index) => {
-                const link = magnetLink(torrent.magnet, magnetIcon, torrent.quality ?? "download");
+                const link = magnetLink(
+                    torrent.magnet,
+                    magnetIcon,
+                    torrent.quality ?? "download",
+                    describeTorrent(torrent),
+                );
                 if (!link) return;
                 link.classList.add("its-button");
+                if (torrent.source) link.append(el("span", { className: "its-src", text: torrent.source }));
                 if (index > 0) qualityCell.append(document.createTextNode(" "));
                 qualityCell.append(link);
             });
@@ -205,6 +288,38 @@ export function renderSeriesTable(torrents, { magnetIcon, defaultSeason } = {}) 
 
     container.append(picker, table);
     return container;
+}
+
+/**
+ * Season-pack row: a handful of whole-season downloads shown above the episode
+ * table. EZTV carries no packs, so these come from Torrentio.
+ */
+export function renderSeasonPacks(packs, { magnetIcon, season, state = "ready" } = {}) {
+    const box = el("div", { className: "its-packs" });
+    box.dataset.state = state;
+
+    box.append(el("span", { className: "its-packs-label", text: `Full season ${season ?? ""}`.trim() }));
+
+    if (state === "loading") {
+        box.append(el("span", { className: "its-packs-note", text: "Looking for season packs…" }));
+        return box;
+    }
+
+    const usable = limitPerQuality(packs ?? [], 1);
+    if (usable.length === 0) {
+        box.append(el("span", { className: "its-packs-note", text: "No season packs found." }));
+        return box;
+    }
+
+    for (const pack of usable) {
+        const link = magnetLink(pack.magnet, magnetIcon, pack.quality ?? "download", describeTorrent(pack));
+        if (!link) continue;
+        link.classList.add("its-button");
+        if (pack.size) link.append(el("span", { className: "its-src", text: pack.size }));
+        box.append(link);
+    }
+
+    return box;
 }
 
 export function renderLinks(sites) {

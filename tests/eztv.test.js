@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { MAX_PAGES, parseQuality, fetchSeriesTorrents } from "../src/background/providers/eztv.js";
+import { MAX_PAGES, parseQuality, parseSource, fetchSeriesTorrents } from "../src/background/providers/eztv.js";
 
 const row = (over = {}) => ({
     hash: "abc",
@@ -52,6 +52,7 @@ describe("fetchSeriesTorrents", () => {
             episode: 10,
             title: "Game of Thrones S01E10 1080p BluRay",
             quality: "1080p",
+            source: "BluRay",
             magnet: "magnet:?xt=urn:btih:abc",
             seeds: 12,
             peers: 0,
@@ -112,5 +113,34 @@ describe("fetchSeriesTorrents", () => {
             throw new Error("eztv unreachable");
         });
         await expect(fetchSeriesTorrents("tt1", { fetchJsonImpl })).rejects.toThrow("eztv unreachable");
+    });
+});
+
+describe("parseSource", () => {
+    test.each([
+        ["Show S01E01 720p HDTV x264-GROUP", "HDTV"],
+        ["Show S01E01 1080p WEB-DL DD5.1", "WEB-DL"],
+        ["Show S01E01 1080p WEBRip x265", "WEBRip"],
+        ["Show S01E01 2160p UHD BluRay x265", "BluRay"],
+        ["Show S01E01 1080p WEB h264", "WEB"],
+        ["Show S01E01 2160p REMUX", "REMUX"],
+    ])("reads the source from %s", (title, expected) => {
+        expect(parseSource(title)).toBe(expected);
+    });
+
+    test("returns null when no source is present", () => {
+        expect(parseSource("Show S01E01 720p x264")).toBeNull();
+        expect(parseSource(undefined)).toBeNull();
+    });
+
+    test("is exposed on normalised torrents so repeated qualities differ", async () => {
+        const fetchJsonImpl = jest.fn(async () =>
+            page([
+                row({ title: "Show S01E01 720p HDTV x264" }),
+                row({ title: "Show S01E01 720p WEB-DL x264", magnet_url: "magnet:?xt=urn:btih:def" }),
+            ]),
+        );
+        const result = await fetchSeriesTorrents("tt1", { fetchJsonImpl });
+        expect(result.map((t) => t.source)).toEqual(["HDTV", "WEB-DL"]);
     });
 });

@@ -1,4 +1,4 @@
-export const MESSAGE_TYPES = { MOVIE: "movie", SERIES: "series" };
+export const MESSAGE_TYPES = { MOVIE: "movie", SERIES: "series", SEASON: "season" };
 
 export function ok(data) {
     return { ok: true, data };
