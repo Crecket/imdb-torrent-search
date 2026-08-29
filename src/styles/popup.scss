@@ -1,0 +1,213 @@
+$accent: #f5c518;
+$bg: #ffffff;
+$fg: #16181c;
+$muted: #5c6470;
+$border: #dfe3e8;
+$surface: #f7f8fa;
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 380px;
+    margin: 0;
+    padding: 12px;
+    background: $bg;
+    color: $fg;
+    font: 13px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+    }
+}
+
+.card {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid $border;
+    border-radius: 8px;
+    background: $surface;
+
+    h2 {
+        margin: 0 0 8px;
+        font-size: 14px;
+    }
+
+    h3 {
+        margin: 16px 0 6px;
+        font-size: 13px;
+        color: $muted;
+    }
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 500;
+
+    input {
+        width: 16px;
+        height: 16px;
+        accent-color: $accent;
+        cursor: pointer;
+    }
+}
+
+.preview {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    border: 1px solid $border;
+    border-radius: 6px;
+}
+
+.help {
+    margin: 0 0 8px;
+    color: $muted;
+}
+
+code {
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(127, 127, 127, 0.18);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+}
+
+.example {
+    margin: 0 0 12px;
+    padding: 8px;
+    overflow-x: auto;
+    border-radius: 6px;
+    background: rgba(127, 127, 127, 0.12);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    color: $muted;
+}
+
+.field {
+    display: block;
+    margin-bottom: 10px;
+
+    span {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    em {
+        color: $muted;
+        font-style: normal;
+        font-weight: 400;
+    }
+
+    input {
+        width: 100%;
+        padding: 7px 9px;
+        border: 1px solid $border;
+        border-radius: 6px;
+        background: $bg;
+        color: inherit;
+        font: inherit;
+
+        &:focus {
+            border-color: $accent;
+            outline: 2px solid rgba(245, 197, 24, 0.35);
+        }
+    }
+}
+
+button.primary {
+    padding: 7px 14px;
+    border: 0;
+    border-radius: 6px;
+    background: $accent;
+    color: #16181c;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        filter: brightness(0.94);
+    }
+}
+
+#custom-links-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 1px solid $border;
+
+        &:last-child {
+            border-bottom: 0;
+        }
+    }
+
+    .template {
+        flex: 1;
+        overflow-wrap: anywhere;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+    }
+
+    .empty {
+        color: $muted;
+    }
+
+    button.remove {
+        padding: 3px 9px;
+        border: 1px solid $border;
+        border-radius: 999px;
+        background: transparent;
+        color: #a40e26;
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+
+        &:hover {
+            border-color: #a40e26;
+        }
+    }
+}
+
+.toast-host {
+    position: sticky;
+    bottom: 0;
+    padding: 9px 12px;
+    border-radius: 6px;
+    background: #1f6feb;
+    color: #fff;
+    font-weight: 500;
+
+    &[data-tone="error"] {
+        background: #a40e26;
+    }
+
+    &[data-tone="success"] {
+        background: #1a7f37;
+    }
+}
