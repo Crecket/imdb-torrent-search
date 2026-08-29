@@ -4,7 +4,10 @@
  *
  *   node scripts/verify.mjs [tt0111161] [tt0944947]
  *
- * Exits non-zero if a movie lookup, a series lookup, or the IMDb scrape fails.
+ * Exits non-zero only when something is actually broken: a movie or series
+ * lookup fails, or no YTS base is reachable at all. A single dead base is a
+ * warning — the fallback list exists so one host can disappear. IMDb is
+ * reported as skipped, since it serves scripted clients a bot interstitial.
  */
 import { YTS_BASES, fetchMovieTorrents } from "../src/background/providers/yts.js";
 import { fetchSeriesTorrents } from "../src/background/providers/eztv.js";
@@ -17,6 +20,7 @@ const seriesId = process.argv[3] ?? "tt0944947";
 
 let failures = 0;
 let skipped = 0;
+let warnings = 0;
 
 const pass = (msg) => console.log(`  ok    ${msg}`);
 const fail = (msg) => {
@@ -27,17 +31,27 @@ const skip = (msg) => {
     skipped += 1;
     console.log(`  skip  ${msg}`);
 };
+const warn = (msg) => {
+    warnings += 1;
+    console.log(`  warn  ${msg}`);
+};
 
 console.log("\nYTS bases");
+let reachableBases = 0;
 for (const base of YTS_BASES) {
     const url = `${base}/list_movies.json?query_term=${movieId}`;
     try {
-        const payload = await fetchJson(url, { retries: 0, timeoutMs: 20000 });
+        const payload = await fetchJson(url, { retries: 0, timeoutMs: 25000 });
+        reachableBases += 1;
         pass(`${base} — movie_count=${payload?.data?.movie_count ?? "?"}`);
     } catch (error) {
-        fail(`${base} — ${error.message}`);
+        // A dead base is only a warning: the list exists precisely so one host
+        // can disappear without breaking lookups. Losing all of them is fatal,
+        // and the movie lookup below is what actually proves it.
+        warn(`${base} — ${error.message}`);
     }
 }
+if (reachableBases === 0) fail("no YTS base is reachable");
 
 console.log("\nMovie lookup");
 try {
@@ -117,9 +131,13 @@ if (skipped > 0) {
     );
 }
 
+const notes = [warnings ? `${warnings} warning${warnings > 1 ? "s" : ""}` : null, skipped ? `${skipped} skipped` : null]
+    .filter(Boolean)
+    .join(", ");
+
 console.log(
     failures === 0
-        ? `\nAll live checks passed${skipped ? ` (${skipped} skipped)` : ""}.\n`
-        : `\n${failures} check(s) failed${skipped ? `, ${skipped} skipped` : ""}.\n`,
+        ? `\nAll live checks passed${notes ? ` (${notes})` : ""}.\n`
+        : `\n${failures} check(s) failed${notes ? `, ${notes}` : ""}.\n`,
 );
 process.exit(failures === 0 ? 0 : 1);
