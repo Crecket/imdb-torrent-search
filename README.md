@@ -90,3 +90,9 @@ stale-while-revalidate: an expired entry is shown immediately with an
 "Updating..." indicator while it refreshes behind the results. A failed refresh
 keeps the stale data on screen rather than replacing it with an error. At most
 40 entries are kept, oldest evicted first.
+
+## Store assets
+
+Chrome Web Store screenshots and promo tiles live in `images/store/`, sized and
+formatted to the store's requirements. See `images/store/README.md` for what
+goes in which slot.
