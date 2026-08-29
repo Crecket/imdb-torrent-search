@@ -1,4 +1,6 @@
-extension/build/*
-releases/*
-!releases/.gitkeep
 node_modules
+extension/build
+releases/*.zip
+coverage
+*.log
+.DS_Store
