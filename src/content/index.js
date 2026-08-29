@@ -141,6 +141,22 @@ async function init() {
 
     new MutationObserver(scheduleSync).observe(document.body, { childList: true, subtree: true });
     window.addEventListener("popstate", scheduleSync);
+
+    // Pick up popup changes without needing a page reload.
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local") return;
+
+        getSettings()
+            .then((next) => {
+                settings = next;
+                // Re-render only if the panel is open and something visible changed.
+                const imdbID = readImdbId(location.pathname);
+                if (isOpen && imdbID && ("displayLinks" in changes || "customUrls" in changes)) {
+                    loadResults(imdbID).catch(logger.error);
+                }
+            })
+            .catch(logger.error);
+    });
 }
 
 init().catch(logger.error);

@@ -11,21 +11,35 @@ const dev = process.argv.includes("--dev");
 
 const pkg = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
 
-const jsOptions = {
-    entryPoints: {
-        "service-worker": path.join(root, "src/background/service-worker.js"),
-        content: path.join(root, "src/content/index.js"),
-        popup: path.join(root, "src/popup/index.js"),
-    },
+const shared = {
     outdir,
     bundle: true,
-    format: "esm",
     target: ["chrome110"],
     sourcemap: dev ? "inline" : false,
     minify: !dev,
     logLevel: "info",
     define: { "process.env.NODE_ENV": JSON.stringify(dev ? "development" : "production") },
 };
+
+// The service worker and the popup are loaded as modules and stay ESM.
+// The content script is not: Chrome injects it as a classic script, so it must
+// be an IIFE. Leaving it as "esm" happens to work only while the bundle stays
+// flat, and would break the moment a dynamic import appeared.
+const bundles = [
+    {
+        ...shared,
+        format: "esm",
+        entryPoints: {
+            "service-worker": path.join(root, "src/background/service-worker.js"),
+            popup: path.join(root, "src/popup/index.js"),
+        },
+    },
+    {
+        ...shared,
+        format: "iife",
+        entryPoints: { content: path.join(root, "src/content/index.js") },
+    },
+];
 
 const styles = [
     ["src/styles/content.scss", "content.css"],
@@ -53,9 +67,11 @@ await syncManifestVersion();
 await buildStyles();
 
 if (watch) {
-    const ctx = await context(jsOptions);
-    await ctx.watch();
+    for (const options of bundles) {
+        const ctx = await context(options);
+        await ctx.watch();
+    }
     console.log("watching…");
 } else {
-    await build(jsOptions);
+    await Promise.all(bundles.map((options) => build(options)));
 }
