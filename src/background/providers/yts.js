@@ -1,11 +1,21 @@
 import { fetchJson } from "../http.js";
 
 /**
- * Tried in order until one answers. yts.mx has historically moved domains, and
- * movies-api.accel.li is the base the project currently documents, so we keep
- * both rather than betting the extension on a single host.
+ * Tried in order until one answers.
+ *
+ * movies-api.accel.li leads because it is the base that actually responds:
+ * yts.mx fails to connect on many networks (EU ISP torrent-site blocks), and
+ * putting a dead host first cost a full timeout before every lookup. yts.mx is
+ * kept as a secondary since it works where it is not blocked.
  */
-export const YTS_BASES = ["https://yts.mx/api/v2", "https://movies-api.accel.li/api/v2"];
+export const YTS_BASES = ["https://movies-api.accel.li/api/v2", "https://yts.mx/api/v2"];
+
+/**
+ * Per-base budget. Generous because accel.li can take well over 10s to answer,
+ * but applied only once per base: the fallback loop is the retry, so retrying
+ * inside fetchJson would multiply the wait on a blocked host.
+ */
+const BASE_TIMEOUT_MS = 25000;
 
 const TRACKERS = [
     "udp://tracker.opentrackr.org:1337/announce",
@@ -50,7 +60,7 @@ export async function fetchMovieTorrents(imdbID, { fetchJsonImpl = fetchJson, ba
     for (const base of bases) {
         const url = `${base}/list_movies.json?query_term=${encodeURIComponent(imdbID)}`;
         try {
-            const payload = await fetchJsonImpl(url);
+            const payload = await fetchJsonImpl(url, { retries: 0, timeoutMs: BASE_TIMEOUT_MS });
             const movie = payload?.data?.movies?.[0];
             if (!movie || !Array.isArray(movie.torrents)) return [];
 

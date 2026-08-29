@@ -16,11 +16,16 @@ const movieId = process.argv[2] ?? "tt0111161";
 const seriesId = process.argv[3] ?? "tt0944947";
 
 let failures = 0;
+let skipped = 0;
 
 const pass = (msg) => console.log(`  ok    ${msg}`);
 const fail = (msg) => {
     failures += 1;
     console.log(`  FAIL  ${msg}`);
+};
+const skip = (msg) => {
+    skipped += 1;
+    console.log(`  skip  ${msg}`);
 };
 
 console.log("\nYTS bases");
@@ -70,11 +75,28 @@ for (const [id, expectedType] of [
                 "accept-language": "en-US,en;q=0.9",
             },
         });
-        if (!response.ok) {
-            fail(`${id} — HTTP ${response.status} (IMDb may be rate limiting; retry or check in a browser)`);
+        const html = await response.text();
+
+        // IMDb answers scripted clients with a bot interstitial: a 202 (or 403)
+        // carrying a near-empty body with none of the real page markers. Treat
+        // that as "cannot check from here", never as a selector failure — a
+        // false negative here is worse than no check at all.
+        const isInterstitial =
+            response.status === 202 ||
+            response.status === 403 ||
+            (html.length < 20000 && !html.includes("application/ld+json") && !html.includes("hero__pageTitle"));
+
+        if (isInterstitial) {
+            skip(`${id} — IMDb served a bot interstitial (HTTP ${response.status}, ${html.length} bytes)`);
             continue;
         }
-        const { window } = new JSDOM(await response.text());
+
+        if (!response.ok) {
+            skip(`${id} — HTTP ${response.status}; check in the browser instead`);
+            continue;
+        }
+
+        const { window } = new JSDOM(html);
         const info = readPageInfo(window.document);
 
         if (!info.title) fail(`${id} — no title extracted; selectors need updating`);
@@ -87,5 +109,17 @@ for (const [id, expectedType] of [
     }
 }
 
-console.log(failures === 0 ? "\nAll live checks passed.\n" : `\n${failures} check(s) failed.\n`);
+if (skipped > 0) {
+    console.log(
+        "\n  IMDb blocks scripted requests, so its markup can only be checked in a real\n" +
+            "  browser. Open an IMDb title page and paste scripts/diagnose-in-console.js\n" +
+            "  into that page's console to verify extraction there.",
+    );
+}
+
+console.log(
+    failures === 0
+        ? `\nAll live checks passed${skipped ? ` (${skipped} skipped)` : ""}.\n`
+        : `\n${failures} check(s) failed${skipped ? `, ${skipped} skipped` : ""}.\n`,
+);
 process.exit(failures === 0 ? 0 : 1);

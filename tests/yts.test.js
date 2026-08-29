@@ -101,3 +101,31 @@ test("sends the imdb id as the query term", async () => {
     await fetchMovieTorrents("tt0133093", { fetchJsonImpl });
     expect(fetchJsonImpl.mock.calls[0][0]).toContain("query_term=tt0133093");
 });
+
+describe("base ordering and per-base budget", () => {
+    test("tries the reachable accel.li base before yts.mx", () => {
+        // yts.mx fails to connect on blocked networks; leading with it cost a
+        // full timeout on every lookup before the working base was reached.
+        expect(YTS_BASES[0]).toContain("movies-api.accel.li");
+        expect(YTS_BASES).toContain("https://yts.mx/api/v2");
+    });
+
+    test("disables fetchJson's own retry so a dead base costs one timeout, not two", async () => {
+        const fetchJsonImpl = jest.fn(async () => movieResponse([{ hash: "a", quality: "1080p" }]));
+        await fetchMovieTorrents("tt0133093", { fetchJsonImpl });
+
+        const [, options] = fetchJsonImpl.mock.calls[0];
+        expect(options.retries).toBe(0);
+        expect(options.timeoutMs).toBeGreaterThanOrEqual(20000);
+    });
+
+    test("still reaches the second base when the first times out", async () => {
+        const fetchJsonImpl = jest
+            .fn()
+            .mockRejectedValueOnce(new Error("This operation was aborted"))
+            .mockResolvedValueOnce(movieResponse([{ hash: "a", quality: "1080p" }]));
+
+        await expect(fetchMovieTorrents("tt0133093", { fetchJsonImpl })).resolves.toHaveLength(1);
+        expect(fetchJsonImpl).toHaveBeenCalledTimes(2);
+    });
+});
