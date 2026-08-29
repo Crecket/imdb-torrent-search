@@ -1,0 +1,119 @@
+$accent: #f5c518; // IMDb yellow
+$border: rgba(0, 0, 0, 0.12);
+
+#imdb-torrent-search-icon {
+    width: 20px;
+    height: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+    vertical-align: middle;
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+#imdb-torrent-search-panel {
+    &:not(:empty) {
+        margin: 12px 0;
+        padding: 12px;
+        border: 1px solid $border;
+        border-radius: 6px;
+        background: rgba(127, 127, 127, 0.08);
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .its-message {
+        margin: 6px 0;
+    }
+
+    .its-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid $border;
+    }
+
+    .its-links-label {
+        margin-right: 4px;
+    }
+
+    .its-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border: 1px solid $border;
+        border-radius: 999px;
+        text-decoration: none;
+        font-size: 12px;
+        white-space: nowrap;
+
+        img {
+            width: 14px;
+            height: 14px;
+        }
+
+        &:hover {
+            border-color: $accent;
+            background: rgba(245, 197, 24, 0.16);
+        }
+    }
+
+    .its-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+            padding: 4px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        thead th,
+        .its-subhead th {
+            font-weight: 600;
+            border-bottom: 1px solid $border;
+        }
+
+        .its-season th {
+            padding-top: 12px;
+            font-size: 14px;
+            color: inherit;
+        }
+
+        tbody tr:hover {
+            background: rgba(127, 127, 127, 0.1);
+        }
+    }
+
+    .its-magnet {
+        width: 14px;
+        height: 14px;
+        vertical-align: middle;
+    }
+
+    .its-qualities a {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-right: 8px;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .its-seeds {
+        color: #1a7f37;
+    }
+
+    .its-peers {
+        color: #a40e26;
+    }
+}
