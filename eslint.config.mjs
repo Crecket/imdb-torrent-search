@@ -37,4 +37,14 @@ export default [
         files: ["scripts/**/*.mjs"],
         languageOptions: { ecmaVersion: 2023, sourceType: "module", globals: globals.node },
     },
+    {
+        // Pasted into a browser devtools console, not run by Node. `copy` is a
+        // devtools helper rather than a page global, so it is declared here.
+        files: ["scripts/imdb-probe.js"],
+        languageOptions: {
+            ecmaVersion: 2023,
+            sourceType: "script",
+            globals: { ...globals.browser, copy: "readonly" },
+        },
+    },
 ];
