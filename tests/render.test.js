@@ -7,6 +7,7 @@ import {
     renderInfoIcon,
     isUnknownQuality,
     renderSeasonPacks,
+    seasonOptions,
     renderStatus,
     formatAge,
     formatBytes,
@@ -102,7 +103,7 @@ describe("renderSeriesTable", () => {
     test("labels the season control and lists the episode number", () => {
         const el = renderSeriesTable([episode({ season: 3, episode: 7 })], ICON);
         expect(el.querySelector(".its-season-label").textContent).toBe("Season");
-        expect(el.querySelector("option").textContent).toBe("3 — 1 episode");
+        expect(el.querySelector('option[value="3"]').textContent).toBe("3 — 1 episode");
         expect(el.querySelector("select").getAttribute("aria-label")).toBe("Season");
         expect(el.querySelector("tbody").textContent).toContain("7");
     });
@@ -192,13 +193,38 @@ describe("season selector", () => {
         episode({ season: 10, episode: 1, title: "S10E01 2160p", magnet: "magnet:?xt=urn:btih:d" }),
     ];
 
-    test("renders one option per season, numerically ordered", () => {
+    test("offers every season from 1 to the highest, including gaps", () => {
+        // Seasons 1, 2 and 10 have episodes; 3-9 do not. They must still be
+        // selectable, because a season pack may exist for them.
         const el = renderSeriesTable(manySeasons(), ICON);
         const options = [...el.querySelectorAll("option")].map((o) => o.value);
-        expect(options).toEqual(["1", "2", "10"]);
+        expect(options).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]);
     });
 
-    test("defaults to the latest season", () => {
+    test("marks a season with no indexed episodes", () => {
+        const el = renderSeriesTable(manySeasons(), ICON);
+        expect(el.querySelector('option[value="5"]').textContent).toBe("5 — season pack only");
+        expect(el.querySelector('option[value="2"]').textContent).toBe("2 — 1 episode");
+    });
+
+    test("selecting an episode-less season explains itself rather than going blank", () => {
+        const el = renderSeriesTable(manySeasons(), ICON);
+        const select = el.querySelector("select");
+        select.value = "5";
+        select.dispatchEvent(new Event("change"));
+
+        expect(el.querySelector(".its-empty-season")).not.toBeNull();
+        expect(el.querySelector("tbody").textContent).toContain("No individual episodes indexed");
+    });
+
+    test("extends the range when the page reports more seasons than are indexed", () => {
+        const el = renderSeriesTable(manySeasons(), { ...ICON, totalSeasons: 12 });
+        const options = [...el.querySelectorAll("option")].map((o) => o.value);
+        expect(options).toHaveLength(12);
+        expect(options.at(-1)).toBe("12");
+    });
+
+    test("defaults to the latest season that actually has episodes", () => {
         const el = renderSeriesTable(manySeasons(), ICON);
         expect(el.querySelector("select").value).toBe("10");
         expect(el.querySelector("tbody").textContent).toContain("S10E01");
@@ -237,7 +263,7 @@ describe("season selector", () => {
 
     test("reports the total episode count across all seasons", () => {
         const el = renderSeriesTable(manySeasons(), ICON);
-        expect(el.querySelector(".its-total").textContent).toBe("4 episodes across 3 seasons");
+        expect(el.querySelector(".its-total").textContent).toBe("4 episodes across 10 seasons");
     });
 
     test("a malicious episode title is still inert inside the season view", () => {
@@ -517,5 +543,41 @@ describe("unknown-quality info icon", () => {
     test("renderInfoIcon returns null for empty text", () => {
         expect(renderInfoIcon("")).toBeNull();
         expect(renderInfoIcon(undefined)).toBeNull();
+    });
+});
+
+describe("seasonOptions", () => {
+    const grouped = (...seasons) => seasons.map((season) => ({ season, episodes: [{ episode: 1, torrents: [] }] }));
+
+    test("fills gaps between indexed seasons", () => {
+        expect(seasonOptions(grouped(1, 4)).map((s) => s.season)).toEqual([1, 2, 3, 4]);
+    });
+
+    test("gap seasons come back with no episodes", () => {
+        const filled = seasonOptions(grouped(1, 3));
+        expect(filled.find((s) => s.season === 2).episodes).toEqual([]);
+        expect(filled.find((s) => s.season === 1).episodes).toHaveLength(1);
+    });
+
+    test("extends to totalSeasons when it exceeds what is indexed", () => {
+        expect(seasonOptions(grouped(1, 2), 5).map((s) => s.season)).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    test("ignores a totalSeasons lower than what is indexed", () => {
+        expect(seasonOptions(grouped(1, 2, 3), 2).map((s) => s.season)).toEqual([1, 2, 3]);
+    });
+
+    test("keeps a season 0 of specials at the front", () => {
+        const withSpecials = [...grouped(1, 2), { season: 0, episodes: [{ episode: 0, torrents: [] }] }];
+        expect(seasonOptions(withSpecials).map((s) => s.season)).toEqual([0, 1, 2]);
+    });
+
+    test("returns the input unchanged when there is nothing to fill", () => {
+        expect(seasonOptions([])).toEqual([]);
+    });
+
+    test("tolerates a non-numeric totalSeasons", () => {
+        expect(seasonOptions(grouped(1, 2), undefined).map((s) => s.season)).toEqual([1, 2]);
+        expect(seasonOptions(grouped(1, 2), NaN).map((s) => s.season)).toEqual([1, 2]);
     });
 });

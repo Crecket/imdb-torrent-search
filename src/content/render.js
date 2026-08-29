@@ -238,8 +238,41 @@ export function renderMovieTable(allTorrents, { magnetIcon, perQuality = MOVIE_P
     return table;
 }
 
-export function renderSeriesTable(torrents, { magnetIcon, defaultSeason } = {}) {
-    const seasons = groupEpisodes(torrents ?? []);
+/**
+ * Every season the picker should offer.
+ *
+ * The episode index (EZTV) can miss a season entirely while a whole-season pack
+ * still exists for it, so gaps are filled in rather than skipped: a season
+ * absent from the dropdown is a season the viewer cannot reach at all.
+ * `totalSeasons`, when the page supplies it, extends the range past the last
+ * season we have episodes for.
+ */
+export function seasonOptions(grouped, totalSeasons) {
+    const byNumber = new Map(grouped.map((entry) => [entry.season, entry]));
+
+    const highest = Math.max(
+        ...[...byNumber.keys()].filter((n) => Number.isFinite(n)),
+        Number.isFinite(totalSeasons) ? totalSeasons : 0,
+        0,
+    );
+    if (highest < 1) return grouped;
+
+    const options = [];
+    for (let season = 1; season <= highest; season += 1) {
+        options.push(byNumber.get(season) ?? { season, episodes: [] });
+    }
+
+    // Keep any oddity the loop would drop, e.g. a season 0 of specials.
+    for (const entry of grouped) {
+        if (entry.season < 1) options.unshift(entry);
+    }
+
+    return options;
+}
+
+export function renderSeriesTable(torrents, { magnetIcon, defaultSeason, totalSeasons } = {}) {
+    const grouped = groupEpisodes(torrents ?? []);
+    const seasons = seasonOptions(grouped, totalSeasons);
     if (seasons.length === 0) return renderMessage("No direct torrents were found.");
 
     const container = el("div", { className: "its-series" });
@@ -256,23 +289,33 @@ export function renderSeriesTable(torrents, { magnetIcon, defaultSeason } = {}) 
     for (const { season, episodes } of seasons) {
         select.append(
             el("option", {
-                text: `${season} — ${episodes.length} episode${episodes.length === 1 ? "" : "s"}`,
+                text:
+                    episodes.length === 0
+                        ? `${season} — season pack only`
+                        : `${season} — ${episodes.length} episode${episodes.length === 1 ? "" : "s"}`,
                 attrs: { value: String(season) },
             }),
         );
     }
 
-    // Default to the most recent season, which is what a viewer usually wants.
+    // Default to the most recent season that actually has episodes; falling on
+    // an empty one would show a blank table for no reason.
+    const withEpisodes = seasons.filter((entry) => entry.episodes.length > 0);
     const initial = seasons.some((entry) => entry.season === defaultSeason)
         ? defaultSeason
-        : seasons[seasons.length - 1].season;
+        : (withEpisodes[withEpisodes.length - 1] ?? seasons[seasons.length - 1]).season;
     select.value = String(initial);
 
     wrap.append(select);
     picker.append(label, wrap);
 
     const total = seasons.reduce((sum, entry) => sum + entry.episodes.length, 0);
-    picker.append(el("span", { className: "its-total", text: `${total} episodes across ${seasons.length} seasons` }));
+    picker.append(
+        el("span", {
+            className: "its-total",
+            text: `${total} episodes across ${seasons.length} season${seasons.length === 1 ? "" : "s"}`,
+        }),
+    );
 
     const table = el("table", { className: "its-table" });
     const body = el("tbody");
@@ -281,6 +324,18 @@ export function renderSeriesTable(torrents, { magnetIcon, defaultSeason } = {}) 
     const paint = (season) => {
         const entry = seasons.find((candidate) => candidate.season === season) ?? seasons[0];
         const rows = [];
+
+        if (entry.episodes.length === 0) {
+            const row = el("tr", { className: "its-empty-season" });
+            row.append(
+                el("td", {
+                    text: "No individual episodes indexed for this season. Any season pack is shown above.",
+                    attrs: { colspan: "3" },
+                }),
+            );
+            body.replaceChildren(row);
+            return;
+        }
 
         const headRow = el("tr", { className: "its-subhead" });
         for (const heading of ["Ep", "Title", "Quality"]) headRow.append(el("th", { text: heading }));

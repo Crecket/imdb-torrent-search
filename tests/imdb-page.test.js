@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { readImdbId, readPageInfo } from "../src/content/imdb-page.js";
+import { readImdbId, readPageInfo, readSeasonCount } from "../src/content/imdb-page.js";
 
 const load = (name) => {
     const html = readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -78,5 +78,33 @@ describe("readPageInfo", () => {
     test("returns empty strings rather than throwing on a bare document", () => {
         const doc = new DOMParser().parseFromString("<p>nothing</p>", "text/html");
         expect(readPageInfo(doc)).toEqual({ title: "", year: "", type: "movie" });
+    });
+});
+
+describe("readSeasonCount", () => {
+    test("reads the highest season from the episode browser and links", () => {
+        expect(readSeasonCount(load("series-seasons.html"))).toBe(4);
+    });
+
+    test("returns undefined when the page mentions no seasons", () => {
+        expect(readSeasonCount(load("movie.html"))).toBeUndefined();
+    });
+
+    test("reads a season from a query-string link alone", () => {
+        const doc = new DOMParser().parseFromString(
+            '<a href="/title/tt1/episodes?season=7">S7</a><a href="/x?season=3">S3</a>',
+            "text/html",
+        );
+        expect(readSeasonCount(doc)).toBe(7);
+    });
+
+    test("ignores implausible season numbers", () => {
+        const doc = new DOMParser().parseFromString('<a href="/x?season=999">bad</a>', "text/html");
+        expect(readSeasonCount(doc)).toBeUndefined();
+    });
+
+    test("ignores a season=0 link", () => {
+        const doc = new DOMParser().parseFromString('<a href="/x?season=0">specials</a>', "text/html");
+        expect(readSeasonCount(doc)).toBeUndefined();
     });
 });

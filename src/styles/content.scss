@@ -242,6 +242,12 @@ $peers: #f87171;
 
     // Marker beside a quality we could not parse; the release name lives in
     // its title attribute.
+    .its-empty-season td {
+        padding: 14px 8px;
+        color: $panel-muted;
+        font-style: italic;
+    }
+
     .its-info {
         display: inline-flex;
         align-items: center;
