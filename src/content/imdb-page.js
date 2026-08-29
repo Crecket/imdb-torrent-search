@@ -65,33 +65,6 @@ function fromDom(doc) {
 }
 
 /**
- * Highest season number the IMDb page mentions, or undefined.
- *
- * Used to offer seasons the torrent index has no episodes for, which may still
- * have a whole-season pack. Every source here is optional and the function
- * returns undefined rather than guessing, so a markup change degrades to the
- * previous behaviour instead of inventing seasons.
- */
-export function readSeasonCount(doc) {
-    const numbers = [];
-
-    for (const option of doc.querySelectorAll(
-        '#browse-episodes-season option, [data-testid="episodes-browse-episodes"] option',
-    )) {
-        const value = Number(option.getAttribute("value") ?? option.textContent);
-        if (Number.isInteger(value)) numbers.push(value);
-    }
-
-    for (const anchor of doc.querySelectorAll('a[href*="season="]')) {
-        const match = /[?&]season=(\d{1,3})\b/.exec(anchor.getAttribute("href") ?? "");
-        if (match) numbers.push(Number(match[1]));
-    }
-
-    const highest = Math.max(0, ...numbers.filter((n) => Number.isFinite(n) && n > 0 && n < 200));
-    return highest > 0 ? highest : undefined;
-}
-
-/**
  * Read title, year and type for the current title page.
  * JSON-LD is authoritative when present; the DOM scrape is the fallback.
  */

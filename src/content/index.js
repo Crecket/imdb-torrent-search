@@ -2,7 +2,7 @@ import { MESSAGE_TYPES, sendMessage } from "../shared/messages.js";
 import { DEFAULTS, getSettings } from "../shared/storage.js";
 import { buildSearchLinks } from "../shared/links.js";
 import logger from "../shared/logger.js";
-import { readImdbId, readPageInfo, readSeasonCount } from "./imdb-page.js";
+import { readImdbId, readPageInfo } from "./imdb-page.js";
 import {
     formatAge,
     renderLinks,
@@ -61,7 +61,7 @@ function sections(panel) {
 
 function buildTable(type, torrents, defaultSeason) {
     return type === MESSAGE_TYPES.SERIES
-        ? renderSeriesTable(torrents, { magnetIcon, defaultSeason, totalSeasons: readSeasonCount(document) })
+        ? renderSeriesTable(torrents, { magnetIcon, defaultSeason })
         : renderMovieTable(torrents, { magnetIcon });
 }
 

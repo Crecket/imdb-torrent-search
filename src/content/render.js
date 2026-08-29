@@ -244,15 +244,17 @@ export function renderMovieTable(allTorrents, { magnetIcon, perQuality = MOVIE_P
  * The episode index (EZTV) can miss a season entirely while a whole-season pack
  * still exists for it, so gaps are filled in rather than skipped: a season
  * absent from the dropdown is a season the viewer cannot reach at all.
- * `totalSeasons`, when the page supplies it, extends the range past the last
- * season we have episodes for.
+ * `extraSeason` extends the range when the viewer asks for a season past the
+ * last one with episodes. It is deliberately not read from IMDb's markup: the
+ * season count only lives in their internal Next.js payload, which is theirs
+ * to rename at will.
  */
-export function seasonOptions(grouped, totalSeasons) {
+export function seasonOptions(grouped, extraSeason) {
     const byNumber = new Map(grouped.map((entry) => [entry.season, entry]));
 
     const highest = Math.max(
         ...[...byNumber.keys()].filter((n) => Number.isFinite(n)),
-        Number.isFinite(totalSeasons) ? totalSeasons : 0,
+        Number.isFinite(extraSeason) ? extraSeason : 0,
         0,
     );
     if (highest < 1) return grouped;
@@ -270,9 +272,9 @@ export function seasonOptions(grouped, totalSeasons) {
     return options;
 }
 
-export function renderSeriesTable(torrents, { magnetIcon, defaultSeason, totalSeasons } = {}) {
+export function renderSeriesTable(torrents, { magnetIcon, defaultSeason, extraSeason } = {}) {
     const grouped = groupEpisodes(torrents ?? []);
-    const seasons = seasonOptions(grouped, totalSeasons);
+    const seasons = seasonOptions(grouped, extraSeason);
     if (seasons.length === 0) return renderMessage("No direct torrents were found.");
 
     const container = el("div", { className: "its-series" });
@@ -308,6 +310,53 @@ export function renderSeriesTable(torrents, { magnetIcon, defaultSeason, totalSe
 
     wrap.append(select);
     picker.append(label, wrap);
+
+    // Seasons past the last indexed one are only reachable if the viewer can
+    // ask for them: the episode index does not know they exist, and IMDb only
+    // exposes the count in internal markup we will not depend on.
+    const jump = el("form", { className: "its-season-jump" });
+    const jumpInput = el("input", {
+        className: "its-season-jump-input",
+        attrs: {
+            type: "number",
+            min: "1",
+            max: "99",
+            step: "1",
+            placeholder: "#",
+            "aria-label": "Check another season",
+        },
+    });
+    const jumpButton = el("button", { text: "Check", attrs: { type: "submit" } });
+    jump.append(jumpInput, jumpButton);
+
+    jump.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const wanted = Number(jumpInput.value);
+        if (!Number.isInteger(wanted) || wanted < 1 || wanted > 99) return;
+
+        if (!seasons.some((entry) => entry.season === wanted)) {
+            seasons.push({ season: wanted, episodes: [] });
+            seasons.sort((a, b) => a.season - b.season);
+            select.replaceChildren();
+            for (const { season, episodes } of seasons) {
+                select.append(
+                    el("option", {
+                        text:
+                            episodes.length === 0
+                                ? `${season} — season pack only`
+                                : `${season} — ${episodes.length} episode${episodes.length === 1 ? "" : "s"}`,
+                        attrs: { value: String(season) },
+                    }),
+                );
+            }
+        }
+
+        select.value = String(wanted);
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        jumpInput.value = "";
+    });
+
+    picker.append(jump);
 
     const total = seasons.reduce((sum, entry) => sum + entry.episodes.length, 0);
     picker.append(

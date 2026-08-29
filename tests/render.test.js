@@ -217,11 +217,57 @@ describe("season selector", () => {
         expect(el.querySelector("tbody").textContent).toContain("No individual episodes indexed");
     });
 
-    test("extends the range when the page reports more seasons than are indexed", () => {
-        const el = renderSeriesTable(manySeasons(), { ...ICON, totalSeasons: 12 });
+    test("extends the range when the viewer asks for a later season", () => {
+        const el = renderSeriesTable(manySeasons(), { ...ICON, extraSeason: 12 });
         const options = [...el.querySelectorAll("option")].map((o) => o.value);
         expect(options).toHaveLength(12);
         expect(options.at(-1)).toBe("12");
+    });
+
+    test("the jump form adds and selects a season the index never returned", () => {
+        const el = renderSeriesTable(manySeasons(), ICON);
+        expect(el.querySelector('option[value="14"]')).toBeNull();
+
+        el.querySelector(".its-season-jump-input").value = "14";
+        el.querySelector(".its-season-jump").dispatchEvent(new Event("submit"));
+
+        expect(el.querySelector('option[value="14"]').textContent).toBe("14 — season pack only");
+        expect(el.querySelector("select").value).toBe("14");
+        expect(el.querySelector(".its-empty-season")).not.toBeNull();
+    });
+
+    test("the jump form fires a change event so season packs reload", () => {
+        const el = renderSeriesTable(manySeasons(), ICON);
+        const seen = [];
+        el.querySelector("select").addEventListener("change", (e) => seen.push(e.target.value));
+
+        el.querySelector(".its-season-jump-input").value = "11";
+        el.querySelector(".its-season-jump").dispatchEvent(new Event("submit"));
+
+        expect(seen).toEqual(["11"]);
+    });
+
+    test("the jump form ignores out-of-range and junk input", () => {
+        const el = renderSeriesTable(manySeasons(), ICON);
+        const before = el.querySelectorAll("option").length;
+
+        for (const bad of ["0", "-3", "500", "abc", ""]) {
+            el.querySelector(".its-season-jump-input").value = bad;
+            el.querySelector(".its-season-jump").dispatchEvent(new Event("submit"));
+        }
+
+        expect(el.querySelectorAll("option")).toHaveLength(before);
+    });
+
+    test("jumping to a season that already exists does not duplicate it", () => {
+        const el = renderSeriesTable(manySeasons(), ICON);
+        const before = el.querySelectorAll("option").length;
+
+        el.querySelector(".its-season-jump-input").value = "2";
+        el.querySelector(".its-season-jump").dispatchEvent(new Event("submit"));
+
+        expect(el.querySelectorAll("option")).toHaveLength(before);
+        expect(el.querySelector("select").value).toBe("2");
     });
 
     test("defaults to the latest season that actually has episodes", () => {
@@ -559,11 +605,11 @@ describe("seasonOptions", () => {
         expect(filled.find((s) => s.season === 1).episodes).toHaveLength(1);
     });
 
-    test("extends to totalSeasons when it exceeds what is indexed", () => {
+    test("extends to extraSeason when it exceeds what is indexed", () => {
         expect(seasonOptions(grouped(1, 2), 5).map((s) => s.season)).toEqual([1, 2, 3, 4, 5]);
     });
 
-    test("ignores a totalSeasons lower than what is indexed", () => {
+    test("ignores an extraSeason lower than what is indexed", () => {
         expect(seasonOptions(grouped(1, 2, 3), 2).map((s) => s.season)).toEqual([1, 2, 3]);
     });
 
@@ -576,7 +622,7 @@ describe("seasonOptions", () => {
         expect(seasonOptions([])).toEqual([]);
     });
 
-    test("tolerates a non-numeric totalSeasons", () => {
+    test("tolerates a non-numeric extraSeason", () => {
         expect(seasonOptions(grouped(1, 2), undefined).map((s) => s.season)).toEqual([1, 2]);
         expect(seasonOptions(grouped(1, 2), NaN).map((s) => s.season)).toEqual([1, 2]);
     });

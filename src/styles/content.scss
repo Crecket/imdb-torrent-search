@@ -234,6 +234,46 @@ $peers: #f87171;
         }
     }
 
+    .its-season-jump {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .its-season-jump-input {
+        width: 52px;
+        padding: 6px 8px;
+        border: 1px solid $panel-border;
+        border-radius: 6px;
+        background: $panel-bg;
+        color: $panel-fg;
+        font: inherit;
+        font-size: 13px;
+
+        &:focus-visible {
+            border-color: $accent;
+            outline: 2px solid rgba(245, 197, 24, 0.45);
+            outline-offset: 1px;
+        }
+    }
+
+    .its-season-jump button {
+        padding: 6px 11px;
+        border: 1px solid $panel-border;
+        border-radius: 6px;
+        background: $panel-chip;
+        color: $panel-fg;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+            border-color: $accent;
+            background: rgba(245, 197, 24, 0.16);
+        }
+    }
+
     .its-total {
         margin-left: auto;
         font-size: 12px;
