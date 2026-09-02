@@ -627,3 +627,23 @@ describe("seasonOptions", () => {
         expect(seasonOptions(grouped(1, 2), NaN).map((s) => s.season)).toEqual([1, 2]);
     });
 });
+
+describe("describeTorrent size estimates", () => {
+    test("spells out what an estimated pack size was derived from", () => {
+        const tooltip = describeTorrent({
+            title: "Peacemaker S02 [ E01 - 08 ] 2160p",
+            seeds: 22,
+            size: "~12 GB",
+            sizeBytes: 8 * 1620000000,
+            episodeSizeBytes: 1620000000,
+            episodes: 8,
+            sizeIsEstimate: true,
+        });
+        expect(tooltip).toContain("~12 GB (8 × 1.5 GB)");
+    });
+
+    test("leaves a reported size unannotated", () => {
+        expect(describeTorrent({ title: "Show S01 1080p", size: "60 GB" })).toContain("60 GB");
+        expect(describeTorrent({ title: "Show S01 1080p", size: "60 GB" })).not.toContain("×");
+    });
+});

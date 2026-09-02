@@ -1,6 +1,7 @@
 import { MESSAGE_TYPES, sendMessage } from "../shared/messages.js";
 import { DEFAULTS, getSettings } from "../shared/storage.js";
 import { buildSearchLinks } from "../shared/links.js";
+import { episodesInSeason } from "../shared/seasons.js";
 import logger from "../shared/logger.js";
 import { readImdbId, readPageInfo } from "./imdb-page.js";
 import {
@@ -69,7 +70,7 @@ function buildTable(type, torrents, defaultSeason) {
  * Load whole-season downloads for the season currently selected, and refresh
  * them whenever the viewer switches seasons.
  */
-function wireSeasonPacks(panel, imdbID) {
+function wireSeasonPacks(panel, imdbID, torrents) {
     const select = panel.querySelector(".its-season-select");
     if (!select) return;
 
@@ -90,7 +91,14 @@ function wireSeasonPacks(panel, imdbID) {
         try {
             show(renderSeasonPacks([], { magnetIcon, season, state: "loading" }));
 
-            const result = await sendMessage({ type: MESSAGE_TYPES.SEASON, imdbID, season });
+            // Torrentio sizes a pack by one episode file, so the background
+            // needs the season's length to report the download's real size.
+            const result = await sendMessage({
+                type: MESSAGE_TYPES.SEASON,
+                imdbID,
+                season,
+                episodeCount: episodesInSeason(torrents, season),
+            });
 
             // Ignore a response for a season the viewer has already moved off.
             if (token !== requestToken || !panel.isConnected) return;
@@ -159,7 +167,7 @@ async function loadResults(imdbID) {
     if (document.getElementById(PANEL_ID) !== panel) return; // navigated away mid-request
 
     slots.results.replaceChildren(buildTable(type, cached.data, undefined));
-    if (type === MESSAGE_TYPES.SERIES) wireSeasonPacks(slots.results, imdbID);
+    if (type === MESSAGE_TYPES.SERIES) wireSeasonPacks(slots.results, imdbID, cached.data);
 
     if (!cached.stale) {
         slots.status.replaceChildren(renderStatus(`Updated ${formatAge(Date.now() - cached.fetchedAt)}.`, "fresh"));
@@ -177,7 +185,7 @@ async function loadResults(imdbID) {
         if (document.getElementById(PANEL_ID) !== panel) return;
 
         slots.results.replaceChildren(buildTable(type, fresh.data, selectedSeason(panel)));
-        if (type === MESSAGE_TYPES.SERIES) wireSeasonPacks(slots.results, imdbID);
+        if (type === MESSAGE_TYPES.SERIES) wireSeasonPacks(slots.results, imdbID, fresh.data);
         slots.status.replaceChildren(renderStatus("Updated just now.", "fresh"));
     } catch (error) {
         logger.error(error);

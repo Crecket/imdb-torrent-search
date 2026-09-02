@@ -1,6 +1,6 @@
 {
     "name": "imdb-torrent-search",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Displays torrents for IMDB movies and series directly on the page",
     "type": "module",
     "private": true,

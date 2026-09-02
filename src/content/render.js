@@ -1,4 +1,7 @@
+import { formatBytes } from "../shared/format.js";
 import { isSafeImageUrl, isSafeUrl } from "../shared/urls.js";
+
+export { formatBytes };
 
 /**
  * Every node here is built with createElement and filled with textContent.
@@ -17,22 +20,6 @@ function el(tag, { text, className, attrs } = {}) {
     return node;
 }
 
-const SIZE_STEPS = ["B", "KB", "MB", "GB", "TB"];
-
-/** Byte count as a short human string, for tooltips. */
-export function formatBytes(bytes) {
-    if (!Number.isFinite(bytes) || bytes <= 0) return "";
-    let value = bytes;
-    let step = 0;
-    while (value >= 1024 && step < SIZE_STEPS.length - 1) {
-        value /= 1024;
-        step += 1;
-    }
-    // One decimal only when it adds information: "1 KB", "1.5 MB", "2 GB".
-    const rounded = value >= 10 || step === 0 ? String(Math.round(value)) : value.toFixed(1).replace(/\.0$/, "");
-    return `${rounded} ${SIZE_STEPS[step]}`;
-}
-
 /**
  * Tooltip text for a magnet link. A season can list "720p" three times over, so
  * the release name is the only thing that tells those entries apart.
@@ -43,8 +30,14 @@ export function describeTorrent(torrent) {
     const parts = [];
     if (torrent.seeds) parts.push(`${torrent.seeds} seeder${torrent.seeds === 1 ? "" : "s"}`);
 
+    // An estimated pack size says what it was estimated from, so nobody has to
+    // guess whether "~12 GB" is the download or one episode.
     const size = torrent.size || formatBytes(torrent.sizeBytes);
-    if (size) parts.push(size);
+    if (size && torrent.sizeIsEstimate && torrent.episodes) {
+        parts.push(`${size} (${torrent.episodes} × ${formatBytes(torrent.episodeSizeBytes)})`);
+    } else if (size) {
+        parts.push(size);
+    }
     if (torrent.source) parts.push(torrent.source);
 
     const name = torrent.title || "";

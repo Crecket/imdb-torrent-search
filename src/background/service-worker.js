@@ -13,17 +13,17 @@ import "./diagnostics.js";
  */
 const inFlight = new Map();
 
-function fetchFor(type, imdbID, season) {
+function fetchFor(type, imdbID, season, episodeCount) {
     if (type === MESSAGE_TYPES.SERIES) return fetchSeriesTorrents(imdbID);
-    if (type === MESSAGE_TYPES.SEASON) return fetchSeasonPacks(imdbID, season);
+    if (type === MESSAGE_TYPES.SEASON) return fetchSeasonPacks(imdbID, season, { episodeCount });
     return fetchMovieTorrents(imdbID);
 }
 
-function revalidate(type, imdbID, key, season) {
+function revalidate(type, imdbID, key, season, episodeCount) {
     const existing = inFlight.get(key);
     if (existing) return existing;
 
-    const promise = fetchFor(type, imdbID, season)
+    const promise = fetchFor(type, imdbID, season, episodeCount)
         .then((data) => writeCache(key, data))
         .finally(() => inFlight.delete(key));
 
@@ -37,6 +37,9 @@ async function handle(request) {
     }
 
     const { type, imdbID, season } = request;
+    // Only used to estimate season-pack sizes; a bad value is dropped, not fatal.
+    const episodeCount =
+        Number.isInteger(request.episodeCount) && request.episodeCount > 0 ? request.episodeCount : undefined;
     if (!Object.values(MESSAGE_TYPES).includes(type)) {
         throw new Error(`Unknown request type: ${type}`);
     }
@@ -49,7 +52,7 @@ async function handle(request) {
     // Explicit refresh: the caller is already showing stale data and is willing
     // to wait for the network.
     if (request.revalidate) {
-        const entry = await revalidate(type, imdbID, key, season);
+        const entry = await revalidate(type, imdbID, key, season, episodeCount);
         return { data: entry.data, fetchedAt: entry.fetchedAt, stale: false };
     }
 
@@ -59,12 +62,12 @@ async function handle(request) {
 
         // Start the refresh now rather than after the caller's round trip; the
         // caller's follow-up request will join this same promise.
-        if (stale) revalidate(type, imdbID, key, season).catch(logger.error);
+        if (stale) revalidate(type, imdbID, key, season, episodeCount).catch(logger.error);
 
         return { data: cached.data, fetchedAt: cached.fetchedAt, stale };
     }
 
-    const entry = await revalidate(type, imdbID, key, season);
+    const entry = await revalidate(type, imdbID, key, season, episodeCount);
     return { data: entry.data, fetchedAt: entry.fetchedAt, stale: false };
 }
 

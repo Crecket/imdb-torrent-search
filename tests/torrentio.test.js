@@ -98,3 +98,25 @@ describe("fetchMovieTorrents", () => {
         await expect(fetchMovieTorrents("tt1", { fetchJsonImpl })).rejects.toThrow("offline");
     });
 });
+
+describe("per-file sizes", () => {
+    test("flags a size that measures one file inside a multi-file torrent", () => {
+        const parsed = parseStream(
+            stream({ title: "Show S02 [ E01 - 08 ] 2160p\nShow S02 E01.mkv\n👤 22 💾 1.51 GB ⚙️ 1337x" }),
+        );
+        expect(parsed.file).toBe("Show S02 E01.mkv");
+        expect(parsed.sizeIsPerFile).toBe(true);
+        expect(parsed.title).toBe("Show S02 [ E01 - 08 ] 2160p");
+    });
+
+    test("treats a two-line title as a whole-torrent size", () => {
+        const parsed = parseStream(stream({ title: "Movie.2160p\n👤 5 💾 9 GB ⚙️ X" }));
+        expect(parsed.sizeIsPerFile).toBe(false);
+        expect(parsed.file).toBe("");
+    });
+
+    test("ignores trailing language lines after the stats line", () => {
+        const parsed = parseStream(stream({ title: "Movie.2160p\n👤 5 💾 9 GB ⚙️ X\n🇬🇧 / 🇮🇹" }));
+        expect(parsed.sizeIsPerFile).toBe(false);
+    });
+});
