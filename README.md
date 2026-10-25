@@ -50,9 +50,10 @@ it runs under jsdom without a browser.
 
 | Service   | Endpoint                        | Notes                                                    |
 | --------- | ------------------------------- | -------------------------------------------------------- |
-| Torrentio | `torrentio.strem.fun`           | Movies, primary. Aggregates many trackers; ~100ms        |
+| Torrentio | `torrentio.strem.fun`           | Movies, primary; season packs; series when EZTV fails    |
 | YTS       | `movies-api.accel.li`, `yts.mx` | Movies, fallback only. Raced; often slow or timing out   |
 | EZTV      | `eztvx.to`                      | Series. `eztv.re` 301s here, so both hosts are permitted |
+| Cinemeta  | `v3-cinemeta.strem.io`          | Series fallback: episode list for per-episode Torrentio  |
 | IMDb      | page scrape                     | JSON-LD first, `data-testid` selectors as fallback       |
 
 ## After installing

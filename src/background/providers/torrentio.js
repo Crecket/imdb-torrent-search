@@ -1,6 +1,8 @@
 import { fetchJson } from "../http.js";
 import { toMagnet } from "../magnet.js";
 import { formatBytes } from "../../shared/format.js";
+import { fetchEpisodeList } from "./cinemeta.js";
+import { parseSource } from "./eztv.js";
 
 /**
  * Torrentio (a Stremio addon) indexes many trackers keyed directly by IMDb id
@@ -163,4 +165,74 @@ export async function fetchMovieTorrents(imdbID, { fetchJsonImpl = fetchJson } =
         .map(parseStream)
         .filter(Boolean)
         .sort((a, b) => (QUALITY_RANK[b.quality] ?? -1) - (QUALITY_RANK[a.quality] ?? -1) || b.seeds - a.seeds);
+}
+
+/** Episode requests in flight at once; enough to finish a long show in seconds
+ *  without hammering Torrentio. */
+const EPISODE_CONCURRENCY = 6;
+
+/**
+ * Every episode's torrents for a series, in EZTV's row shape so the same table
+ * renders either source.
+ *
+ * Torrentio keys series streams by episode, so the episode list comes from
+ * Cinemeta and each episode is a request of its own. Season packs are dropped:
+ * they already have their own row. A failed episode is skipped rather than
+ * failing the show, unless every episode fails.
+ */
+export async function fetchEpisodeTorrents(
+    imdbID,
+    { fetchJsonImpl = fetchJson, listEpisodes = fetchEpisodeList, concurrency = EPISODE_CONCURRENCY } = {},
+) {
+    const episodes = await listEpisodes(imdbID);
+    const collected = [];
+    let failures = 0;
+    let lastError;
+    let next = 0;
+
+    const fetchEpisode = async ({ season, episode }) => {
+        const id = `${encodeURIComponent(imdbID)}:${season}:${episode}`;
+        const payload = await fetchJsonImpl(`${TORRENTIO_BASE}/stream/series/${id}.json`, {
+            retries: 1,
+            timeoutMs: 10000,
+        });
+        const streams = Array.isArray(payload?.streams) ? payload.streams : [];
+
+        for (const stream of streams) {
+            if (isSeasonPack(stream?.title?.split("\n")[0])) continue;
+            const parsed = parseStream(stream);
+            if (!parsed) continue;
+            collected.push({
+                season,
+                episode,
+                title: parsed.title,
+                quality: parsed.quality,
+                // ⚙️ names the tracker; the episode table shows the release
+                // source (WEB, HDTV...) as EZTV rows do.
+                source: parseSource(parsed.title),
+                magnet: parsed.magnet,
+                seeds: parsed.seeds,
+                peers: parsed.peers,
+                sizeBytes: parsed.sizeBytes,
+            });
+        }
+    };
+
+    const worker = async () => {
+        while (next < episodes.length) {
+            const target = episodes[next];
+            next += 1;
+            try {
+                await fetchEpisode(target);
+            } catch (error) {
+                failures += 1;
+                lastError = error;
+            }
+        }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(concurrency, episodes.length) }, worker));
+
+    if (episodes.length > 0 && failures === episodes.length) throw lastError;
+    return collected;
 }

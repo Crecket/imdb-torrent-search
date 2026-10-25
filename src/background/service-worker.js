@@ -1,6 +1,6 @@
 import { MESSAGE_TYPES, ok, fail } from "../shared/messages.js";
 import { fetchMovieTorrents } from "./providers/movies.js";
-import { fetchSeriesTorrents } from "./providers/eztv.js";
+import { fetchSeriesTorrents } from "./providers/series.js";
 import { fetchSeasonPacks } from "./providers/torrentio.js";
 import { cacheKey, isStale, readCache, writeCache } from "./cache.js";
 import logger from "../shared/logger.js";

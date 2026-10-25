@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { parseStream, fetchMovieTorrents } from "../src/background/providers/torrentio.js";
+import { parseStream, fetchMovieTorrents, fetchEpisodeTorrents } from "../src/background/providers/torrentio.js";
 
 const stream = (over = {}) => ({
     name: "Torrentio\n4k DV",
@@ -118,5 +118,97 @@ describe("per-file sizes", () => {
     test("ignores trailing language lines after the stats line", () => {
         const parsed = parseStream(stream({ title: "Movie.2160p\n👤 5 💾 9 GB ⚙️ X\n🇬🇧 / 🇮🇹" }));
         expect(parsed.sizeIsPerFile).toBe(false);
+    });
+});
+
+describe("fetchEpisodeTorrents", () => {
+    const episodeStream = (name, hash) => ({
+        name: "Torrentio\n1080p",
+        title: `${name}\n👤 7 💾 1.5 GB ⚙️ ThePirateBay`,
+        infoHash: hash,
+    });
+    const HASH_A = "a".repeat(40);
+    const HASH_B = "b".repeat(40);
+
+    test("requests each listed episode and tags rows with season and episode", async () => {
+        const fetchJsonImpl = jest.fn(async (url) =>
+            url.endsWith(":1:2.json")
+                ? { streams: [episodeStream("Show.S01E02.1080p.WEB-DL", HASH_A)] }
+                : { streams: [] },
+        );
+        const listEpisodes = async () => [
+            { season: 1, episode: 1 },
+            { season: 1, episode: 2 },
+        ];
+
+        const result = await fetchEpisodeTorrents("tt0944947", { fetchJsonImpl, listEpisodes });
+
+        expect(fetchJsonImpl.mock.calls.map(([url]) => url).sort()).toEqual([
+            "https://torrentio.strem.fun/stream/series/tt0944947:1:1.json",
+            "https://torrentio.strem.fun/stream/series/tt0944947:1:2.json",
+        ]);
+        expect(result).toEqual([
+            {
+                season: 1,
+                episode: 2,
+                title: "Show.S01E02.1080p.WEB-DL",
+                quality: "1080p",
+                source: "WEB-DL",
+                magnet: expect.stringContaining(HASH_A),
+                seeds: 7,
+                peers: 0,
+                sizeBytes: Math.round(1.5 * 1024 ** 3),
+            },
+        ]);
+    });
+
+    test("leaves season packs to the season-pack row", async () => {
+        const fetchJsonImpl = async () => ({
+            streams: [episodeStream("Show.S01.1080p.BluRay", HASH_A), episodeStream("Show.S01E01.720p.HDTV", HASH_B)],
+        });
+        const listEpisodes = async () => [{ season: 1, episode: 1 }];
+
+        const result = await fetchEpisodeTorrents("tt1", { fetchJsonImpl, listEpisodes });
+
+        expect(result.map((row) => row.title)).toEqual(["Show.S01E01.720p.HDTV"]);
+    });
+
+    test("skips an episode that fails while others succeed", async () => {
+        const fetchJsonImpl = async (url) => {
+            if (url.endsWith(":1:1.json")) throw new Error("timeout");
+            return { streams: [episodeStream("Show.S01E02.1080p.WEB", HASH_A)] };
+        };
+        const listEpisodes = async () => [
+            { season: 1, episode: 1 },
+            { season: 1, episode: 2 },
+        ];
+
+        await expect(fetchEpisodeTorrents("tt1", { fetchJsonImpl, listEpisodes })).resolves.toHaveLength(1);
+    });
+
+    test("throws when every episode request fails", async () => {
+        const fetchJsonImpl = async () => {
+            throw new Error("HTTP 429");
+        };
+        const listEpisodes = async () => [{ season: 1, episode: 1 }];
+
+        await expect(fetchEpisodeTorrents("tt1", { fetchJsonImpl, listEpisodes })).rejects.toThrow("HTTP 429");
+    });
+
+    test("keeps no more requests in flight than the concurrency limit", async () => {
+        let active = 0;
+        let peak = 0;
+        const fetchJsonImpl = async () => {
+            active += 1;
+            peak = Math.max(peak, active);
+            await new Promise((resolve) => setTimeout(resolve, 1));
+            active -= 1;
+            return { streams: [] };
+        };
+        const listEpisodes = async () => Array.from({ length: 10 }, (_, i) => ({ season: 1, episode: i + 1 }));
+
+        await fetchEpisodeTorrents("tt1", { fetchJsonImpl, listEpisodes, concurrency: 3 });
+
+        expect(peak).toBe(3);
     });
 });

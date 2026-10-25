@@ -11,6 +11,8 @@
  */
 import { YTS_BASES, fetchMovieTorrents } from "../src/background/providers/yts.js";
 import { fetchSeriesTorrents } from "../src/background/providers/eztv.js";
+import { fetchEpisodeTorrents } from "../src/background/providers/torrentio.js";
+import { fetchEpisodeList } from "../src/background/providers/cinemeta.js";
 import { fetchJson } from "../src/background/http.js";
 import { readPageInfo } from "../src/content/imdb-page.js";
 import { JSDOM } from "jsdom";
@@ -72,6 +74,17 @@ try {
             `${seriesId} — ${torrents.length} torrents across seasons ${[...seasons].sort((a, b) => a - b).join(", ")}`,
         );
     }
+} catch (error) {
+    fail(`${seriesId} — ${error.message}`);
+}
+
+console.log("\nSeries fallback (Cinemeta + Torrentio)");
+try {
+    // Three episodes are enough to prove the chain without a request per episode.
+    const listEpisodes = async (id) => (await fetchEpisodeList(id)).slice(0, 3);
+    const torrents = await fetchEpisodeTorrents(seriesId, { listEpisodes });
+    if (torrents.length === 0) fail(`${seriesId} returned no episode torrents`);
+    else pass(`${seriesId} — ${torrents.length} torrents for the first three episodes`);
 } catch (error) {
     fail(`${seriesId} — ${error.message}`);
 }

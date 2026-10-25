@@ -1,4 +1,5 @@
 import { YTS_BASES } from "./providers/yts.js";
+import { CINEMETA_BASE } from "./providers/cinemeta.js";
 
 const EZTV_PROBE = "https://eztvx.to/api/get-torrents?limit=5&imdb_id=0944947&page=1";
 
@@ -15,6 +16,9 @@ export async function checkHosts({ timeoutMs = 25000 } = {}) {
     const targets = [
         ...YTS_BASES.map((base) => [`YTS  ${new URL(base).hostname}`, `${base}/list_movies.json?query_term=tt0111161`]),
         ["EZTV eztvx.to", EZTV_PROBE],
+        // The series fallback's episode list; it has no host permission and
+        // relies on Cinemeta's CORS headers, which only a real run proves.
+        ["Cinemeta", `${CINEMETA_BASE}/meta/series/tt0944947.json`],
     ];
 
     console.log("%cIMDB Torrent Search — connectivity", "font-weight:bold;font-size:14px");
@@ -37,7 +41,7 @@ export async function checkHosts({ timeoutMs = 25000 } = {}) {
             }
 
             const body = await response.json();
-            const count = body?.data?.movie_count ?? body?.torrents_count ?? "?";
+            const count = body?.data?.movie_count ?? body?.torrents_count ?? body?.meta?.videos?.length ?? "?";
             console.log(`%c  OK        ${label}  (${ms}ms, count=${count})`, "color:#3fb950");
             results.push({ label, ok: true, ms, count });
         } catch (error) {

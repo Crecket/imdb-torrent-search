@@ -18,11 +18,12 @@ type** (movie or series) from the page itself. That is all it reads, and only on
 When you open the torrent panel, the IMDb ID is sent to third-party torrent
 index APIs so they can return matching results:
 
-| Service                         | What it receives | Purpose                           |
-| ------------------------------- | ---------------- | --------------------------------- |
-| `torrentio.strem.fun`           | IMDb ID          | Movie torrent listings            |
-| `movies-api.accel.li`, `yts.mx` | IMDb ID          | Movie torrent listings (fallback) |
-| `eztvx.to`                      | Numeric IMDb ID  | Series torrent listings           |
+| Service                         | What it receives | Purpose                                                    |
+| ------------------------------- | ---------------- | ---------------------------------------------------------- |
+| `torrentio.strem.fun`           | IMDb ID          | Movie and season-pack listings; series episodes (fallback) |
+| `movies-api.accel.li`, `yts.mx` | IMDb ID          | Movie torrent listings (fallback)                          |
+| `eztvx.to`                      | Numeric IMDb ID  | Series torrent listings                                    |
+| `v3-cinemeta.strem.io`          | IMDb ID          | Series episode list, only when EZTV fails or has nothing   |
 
 Requests are made with `credentials: "omit"`, so no cookies are attached.
 
